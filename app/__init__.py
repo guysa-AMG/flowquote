@@ -1,0 +1,1 @@
+"""TalkQuote application package."""

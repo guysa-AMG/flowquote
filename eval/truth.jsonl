@@ -1,0 +1,3 @@
+# eval/truth.jsonl
+{"memo_id": "memo_01", "transcript": "replaced 15mm copper elbow and two hours labour", "expected_items": [{"sku": "COP-15-ELB", "quantity_milli": 1000}, {"sku": "LBR-PLM-STD", "quantity_milli": 2000}]}
+{"memo_id": "memo_02", "transcript": "22mm copper elbow, callout fee", "expected_items": [{"sku": "COP-22-ELB", "quantity_milli": 1000}, {"sku": "FEE-CALLOUT", "quantity_milli": 1000}]}

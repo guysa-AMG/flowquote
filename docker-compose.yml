@@ -1,0 +1,31 @@
+# docker-compose.yml
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app:ro
+      - ./data:/app/data:ro
+      - ./templates:/app/templates:ro
+      - ./eval:/app/eval:ro
+      - talkquote_db:/app/db
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - DATABASE_PATH=/app/db/talkquote.sqlite
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  talkquote_db:
+  ollama_models:

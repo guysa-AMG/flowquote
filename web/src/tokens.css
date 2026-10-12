@@ -1,0 +1,19 @@
+/* web/src/tokens.css */
+:root {
+  --color-galvanised: #D5DADE;
+  --color-cold-blue: #1C57F2;
+  --color-hot-red: #D93A2B;
+  --color-hivis-yellow: #FFD60A;
+  --color-teflon: #F6F8F9;
+  --color-slate-ink: #14222E;
+}
+body {
+  background-color: var(--color-teflon);
+  color: var(--color-slate-ink);
+  font-family: 'Instrument Sans', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

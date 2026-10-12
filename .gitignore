@@ -1,0 +1,49 @@
+# .gitignore
+
+# Audio & databases (PLAN.md §3: synthetic data only, gitignore raw audio/DBs)
+*.wav
+*.mp3
+*.m4a
+*.opus
+*.webm
+*.db
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+venv/
+.env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / frontend
+node_modules/
+dist/
+build/
+.env.local
+*.log
+
+# Docker
+.docker/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backboard (opencode session data)
+.backboard/
+
+# Eval audio (gitignored per PLAN.md §13)
+eval/audio/
