@@ -57,12 +57,13 @@ export default function Settings() {
 
     setChangingPin(true)
     try {
-      setPinSuccess('PIN changed (requires server restart to take effect)')
+      await api.auth.changePin(pin, newPin)
+      setPinSuccess('PIN changed successfully')
       setPin('')
       setNewPin('')
       setConfirmPin('')
     } catch (err) {
-      setPinError('Failed to change PIN')
+      setPinError(err instanceof Error ? err.message : 'Failed to change PIN')
     } finally {
       setChangingPin(false)
     }

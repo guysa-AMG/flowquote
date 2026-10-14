@@ -9,16 +9,21 @@ interface Props {
     note: string | null
   }
   candidates: Array<{
-    id: number
+    price_item_id: number
+    sku: string
     name: string
     unit: string
     price_cents: number
+    score: number
   }>
+  currency: string
   onResolve: (lineId: string, priceItemId: number) => void
   onClose: () => void
+  loading: boolean
+  error: string
 }
 
-export default function AmbiguousModal({ line, candidates, onResolve, onClose }: Props) {
+export default function AmbiguousModal({ line, candidates, currency, onResolve, onClose, loading, error }: Props) {
   const overlayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -61,15 +66,21 @@ export default function AmbiguousModal({ line, candidates, onResolve, onClose }:
         </div>
 
         <div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto">
+          {loading && <p className="text-sm text-slate-ink/60">Loading price-list candidates...</p>}
+          {error && <p role="alert" className="text-sm text-hot-red">{error}</p>}
+          {candidates.length === 0 && (
+            !loading && !error && <p className="text-sm text-slate-ink/60">No eligible price-list items were found. Update the price list before resolving this line.</p>
+          )}
           {candidates.map(candidate => (
             <button
-              key={candidate.id}
-              onClick={() => onResolve(line.id, candidate.id)}
+              key={candidate.price_item_id}
+              onClick={() => onResolve(line.id, candidate.price_item_id)}
               className="w-full text-left p-3 rounded-lg border border-galvanised hover:bg-teflon transition-colors"
             >
-              <div className="font-medium text-slate-ink">{candidate.name}</div>
+              <div className="font-medium text-slate-ink">{candidate.name} <span className="text-slate-ink/50">({candidate.sku})</span></div>
               <div className="flex items-center gap-3 text-sm text-slate-ink/60 mt-1">
-                <span className="tabular-nums">{formatCents(candidate.price_cents)}/{candidate.unit}</span>
+                <span className="tabular-nums">{formatCents(candidate.price_cents, currency)}/{candidate.unit}</span>
+                <span>{Math.round(candidate.score)}% text match</span>
               </div>
             </button>
           ))}

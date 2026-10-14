@@ -26,6 +26,8 @@ export default function QuotePreview() {
   const [quote, setQuote] = useState<any>(null)
   const [version, setVersion] = useState<any>(null)
   const [lines, setLines] = useState<QuoteLine[]>([])
+  const [currency, setCurrency] = useState('ZAR')
+  const [vatRateBp, setVatRateBp] = useState(0)
   const [loading, setLoading] = useState(true)
   const [generatingPdf, setGeneratingPdf] = useState(false)
 
@@ -41,6 +43,8 @@ export default function QuotePreview() {
       setQuote(data.quote)
       setVersion(data.version)
       setLines(data.lines || [])
+      setCurrency(data.currency)
+      setVatRateBp(data.vat_rate_bp)
     } catch (err) {
       console.error('Failed to load quote:', err)
     } finally {
@@ -95,7 +99,9 @@ export default function QuotePreview() {
   }
 
   const handleAddVariation = () => {
-    navigate('/app/record', { state: { quoteId: quote.id, kind: 'variation' } })
+    navigate('/app/record', {
+      state: { quoteId: quote.id, kind: 'variation', basedOnVersion: version.version },
+    })
   }
 
   if (loading) {
@@ -117,9 +123,10 @@ export default function QuotePreview() {
     )
   }
 
-  const subtotal = lines.reduce((sum, l) => sum + l.line_total_cents, 0)
-  const vat = Math.round(subtotal * 0.15)
-  const total = subtotal + vat
+  const subtotal = version.subtotal_cents
+  const vat = version.vat_cents
+  const total = version.total_cents
+  const vatPercent = (vatRateBp / 100).toFixed(2).replace(/\.00$/, '')
 
   return (
     <div className="space-y-6">
@@ -199,10 +206,10 @@ export default function QuotePreview() {
                   {line.unit}
                 </td>
                 <td className="px-4 py-3 text-right tabular-nums">
-                  {formatCents(line.unit_price_cents)}
+                  {formatCents(line.unit_price_cents, currency)}
                 </td>
                 <td className="px-4 py-3 text-right tabular-nums font-medium">
-                  {formatCents(line.line_total_cents)}
+                  {formatCents(line.line_total_cents, currency)}
                 </td>
               </tr>
             ))}
@@ -215,15 +222,15 @@ export default function QuotePreview() {
             <div className="space-y-1">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-ink/70">Subtotal</span>
-                <span className="tabular-nums font-medium">{formatCents(subtotal)}</span>
+                <span className="tabular-nums font-medium">{formatCents(subtotal, currency)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-slate-ink/70">VAT (15%)</span>
-                <span className="tabular-nums font-medium">{formatCents(vat)}</span>
+                <span className="text-slate-ink/70">VAT ({vatPercent}%)</span>
+                <span className="tabular-nums font-medium">{formatCents(vat, currency)}</span>
               </div>
               <div className="border-t border-galvanised pt-1 flex justify-between text-lg font-semibold">
                 <span>Total</span>
-                <span className="tabular-nums">{formatCents(total)}</span>
+                <span className="tabular-nums">{formatCents(total, currency)}</span>
               </div>
             </div>
           </div>
@@ -232,9 +239,11 @@ export default function QuotePreview() {
 
       {/* Actions */}
       <div className="flex gap-3">
-        <button onClick={handleAddVariation} className="btn-primary flex-1">
-          + Add Variation
-        </button>
+        {version.sent_at && (
+          <button onClick={handleAddVariation} className="btn-primary flex-1">
+            + Add Variation
+          </button>
+        )}
         <button onClick={() => navigate('/app/history')} className="btn-secondary">
           Back to History
         </button>

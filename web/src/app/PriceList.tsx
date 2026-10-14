@@ -11,6 +11,7 @@ interface PriceItem {
   category: string
   attrs: Record<string, string>
   active: number
+  currency: string
 }
 
 export default function PriceList() {
@@ -18,6 +19,8 @@ export default function PriceList() {
   const [loading, setLoading] = useState(true)
   const [importing, setImporting] = useState(false)
   const [showImport, setShowImport] = useState(false)
+  const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
 
   useEffect(() => {
     loadItems()
@@ -27,8 +30,10 @@ export default function PriceList() {
     try {
       const data = await api.pricelist.list()
       setItems(data)
+      setError('')
     } catch (err) {
       console.error('Failed to load price list:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load price list')
     } finally {
       setLoading(false)
     }
@@ -36,21 +41,24 @@ export default function PriceList() {
 
   const handleImport = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const formData = new FormData(e.currentTarget)
+    const form = e.currentTarget
+    const formData = new FormData(form)
     const file = formData.get('file') as File
     if (!file) return
 
     setImporting(true)
+    setError('')
+    setMessage('')
     try {
-      await api.pricelist.import(file)
+      const result = await api.pricelist.import(file)
       setShowImport(false)
       await loadItems()
-      alert('Price list imported successfully')
-    } catch (err: any) {
-      alert(err.message || 'Import failed')
+      setMessage(`Imported ${result.imported} price-list item${result.imported === 1 ? '' : 's'}.`)
+      form.reset()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Import failed')
     } finally {
       setImporting(false)
-      e.currentTarget.reset()
     }
   }
 
@@ -71,6 +79,8 @@ export default function PriceList() {
             📥 Import CSV
           </button>
         </div>
+        {error && <p role="alert" className="text-sm text-hot-red">{error}</p>}
+        {message && <p role="status" className="text-sm text-green-700">{message}</p>}
       </div>
 
       {/* Import Modal */}
@@ -125,7 +135,9 @@ export default function PriceList() {
                 <td className="px-4 py-3 font-mono text-sm text-slate-ink">{item.sku}</td>
                 <td className="px-4 py-3 font-medium text-slate-ink">{item.name}</td>
                 <td className="px-4 py-3 text-center text-slate-ink/60">{item.unit}</td>
-                <td className="px-4 py-3 text-right tabular-nums font-medium">{formatCents(item.price_cents)}</td>
+                <td className="px-4 py-3 text-right tabular-nums font-medium">
+                  {formatCents(item.price_cents, item.currency)}
+                </td>
                 <td className="px-4 py-3 text-slate-ink/60 capitalize">{item.category}</td>
                 <td className="px-4 py-3 text-xs text-slate-ink/50 font-mono">
                   {Object.entries(item.attrs).map(([k, v]) => `${k}:${v}`).join(', ') || '—'}

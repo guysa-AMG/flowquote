@@ -139,8 +139,8 @@ def persist_quote_from_extraction(
                     quote_id,
                     business_id,
                     f"Q-{uuid.uuid4().hex[:8].upper()}",
-                    extraction.customer_name,
-                    extraction.site_address,
+                    memo_row["customer_name"] or extraction.customer_name,
+                    memo_row["site_address"] or extraction.site_address,
                 ),
             )
             cursor.execute("UPDATE memo SET quote_id = ? WHERE id = ?", (quote_id, memo_id))
@@ -150,7 +150,11 @@ def persist_quote_from_extraction(
                 cursor.execute(
                     "UPDATE quote SET customer_name = COALESCE(?, customer_name), "
                     "site_address = COALESCE(?, site_address) WHERE id = ?",
-                    (extraction.customer_name, extraction.site_address, quote_id),
+                    (
+                        memo_row["customer_name"] or extraction.customer_name,
+                        memo_row["site_address"] or extraction.site_address,
+                        quote_id,
+                    ),
                 )
 
         extracted_lines, quote_lines = build_quote_lines_from_extraction(
@@ -329,7 +333,8 @@ async def process_job(job_id: str) -> dict:
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT m.id, m.quote_id, m.transcript, m.kind, m.audio_hash, j.state
+            SELECT m.id, m.quote_id, m.transcript, m.kind, m.audio_hash,
+                   m.based_on_version, j.state
             FROM job j
             JOIN memo m ON m.id = j.memo_id
             WHERE j.id = ?
@@ -369,8 +374,28 @@ async def process_job(job_id: str) -> dict:
     # Extract structured data via LLM
     extraction = await extract_with_llm(transcript)
 
-    # Persist quote from extraction
-    result = persist_quote_from_extraction(memo_id, extraction, business_id="biz_default")
+    if row["kind"] == "variation":
+        extraction_json = json.dumps(extraction.model_dump(mode="json"))
+        with get_db() as conn:
+            conn.execute(
+                "UPDATE memo SET extraction_json = ?, status = 'completed' WHERE id = ?",
+                (extraction_json, memo_id),
+            )
+            log_audit_event(
+                conn,
+                settings.default_business_id,
+                "memo",
+                memo_id,
+                "variation_extracted",
+                {
+                    "quote_id": row["quote_id"],
+                    "based_on_version": row["based_on_version"],
+                    "line_count": len(extraction.lines),
+                },
+            )
+        result = {"memo_id": memo_id, "quote_id": row["quote_id"], "kind": "variation"}
+    else:
+        result = persist_quote_from_extraction(memo_id, extraction, business_id="biz_default")
     _apply_audio_retention(memo_id, audio_hash)
     return result
 

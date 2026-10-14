@@ -2,8 +2,10 @@
 
 Single source of truth for APP_NAME, matching thresholds, and money config.
 """
+import re
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 APP_NAME = "TalkQuote"
@@ -40,8 +42,15 @@ class Settings(BaseSettings):
     whisper_local_files_only: bool = True
 
     # Auth
-    auth_pin: str = "1234"
+    auth_pin: str = ""
     secret_key: str = "dev-secret-change-in-production"
+
+    @field_validator("auth_pin")
+    @classmethod
+    def validate_auth_pin(cls, value: str) -> str:
+        if value and not re.fullmatch(r"\d{4}", value):
+            raise ValueError("TALKQUOTE_AUTH_PIN must be exactly four digits")
+        return value
 
 
 settings = Settings()

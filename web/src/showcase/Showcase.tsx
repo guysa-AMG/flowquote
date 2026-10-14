@@ -34,28 +34,28 @@ export default function Showcase() {
     })
     media.add('(prefers-reduced-motion: no-preference)', () => {
       const ctx = gsap.context(() => {
-      const path = pipeRef.current!
-      const pathLength = path.getTotalLength()
+        const path = pipeRef.current!
+        const pathLength = path.getTotalLength()
 
-      gsap.set(path, {
-        strokeDasharray: pathLength,
-        strokeDashoffset: pathLength,
-      })
+        gsap.set(path, {
+          strokeDasharray: pathLength,
+          strokeDashoffset: pathLength,
+        })
 
-      gsap.to(path, {
-        strokeDashoffset: 0,
-        duration: 3,
-        ease: 'power2.inOut',
-        onUpdate: () => {
-          const progress = 1 - Number(path.getAttribute('stroke-dashoffset')!) / pathLength
-          if (progress > 0.3 && !itemsRef.current?.dataset.item1) {
-            dropItem(0)
-          }
-          if (progress > 0.7 && !itemsRef.current?.dataset.item2) {
-            dropItem(1)
-          }
-        },
-      })
+        gsap.to(path, {
+          strokeDashoffset: 0,
+          duration: 3,
+          ease: 'power2.inOut',
+          onUpdate: () => {
+            const progress = 1 - Number(path.getAttribute('stroke-dashoffset')!) / pathLength
+            if (progress > 0.3 && !itemsRef.current?.dataset.item1) {
+              dropItem(0)
+            }
+            if (progress > 0.7 && !itemsRef.current?.dataset.item2) {
+              dropItem(1)
+            }
+          },
+        })
       }, heroRef)
       return () => ctx.revert()
     })
@@ -86,6 +86,10 @@ export default function Showcase() {
 
   useEffect(() => {
     const media = gsap.matchMedia()
+    media.add('(prefers-reduced-motion: reduce)', () => {
+      gsap.set('.explainer-pin', { position: 'relative', inset: 'auto', height: '100vh' })
+      gsap.set('.explainer-content', { y: 0 })
+    })
     media.add('(prefers-reduced-motion: no-preference)', () => {
       const ctx = gsap.context(() => {
         gsap.to('.explainer-content', {
@@ -186,7 +190,7 @@ export default function Showcase() {
               A quote built from the sample price list
             </h2>
             <p className="text-sm text-slate-ink/60 mt-2">
-              Synthetic example data; not a customer quote. Prices and 15% VAT use the repository's sample configuration.
+              Synthetic example data, not a customer quote. Values use the sample ZAR and VAT configuration.
             </p>
           </div>
           <div className="card overflow-hidden">

@@ -12,6 +12,11 @@ Voice-to-quote for plumbers. Record a memo on site → open models extract line 
 
 ## Quickstart (once scaffolded)
 
+Set a private four-digit PIN before starting the server. For Compose, put
+`TALKQUOTE_AUTH_PIN=<your-private-four-digit-PIN>` in an untracked `.env` file.
+Do not commit that file. The PIN is not shown by the login screen; it can be
+changed from Settings after sign-in.
+
 ```bash
 docker compose up   # app + ollama; FastAPI serves Vite build
 make test           # unit + no-network + schema-guard + matcher eval (typed phrases)

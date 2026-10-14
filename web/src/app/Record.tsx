@@ -1,9 +1,30 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
+
+interface QueuedMemo {
+  id: string
+  blob: Blob
+  fileName: string
+  queuedAt: number
+  kind?: 'quote' | 'variation'
+  quoteId?: string
+  customerName?: string
+  siteAddress?: string
+  basedOnVersion?: number
+}
 
 export default function Record() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const routeState = location.state as {
+    kind?: string
+    quoteId?: string
+    basedOnVersion?: number
+  } | null
+  const memoKind: 'quote' | 'variation' = routeState?.kind === 'variation' ? 'variation' : 'quote'
+  const quoteId = routeState?.quoteId
+  const basedOnVersion = routeState?.basedOnVersion
   const [recording, setRecording] = useState(false)
   const [timer, setTimer] = useState(0)
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
@@ -11,6 +32,8 @@ export default function Record() {
   const [customer, setCustomer] = useState('')
   const [site, setSite] = useState('')
   const [offlineCount, setOfflineCount] = useState(0)
+  const [syncError, setSyncError] = useState('')
+  const syncingRef = useRef(false)
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
@@ -21,20 +44,58 @@ export default function Record() {
   const animationRef = useRef<number>()
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  useEffect(() => {
-    const updateOfflineCount = async () => {
-      try {
-        const db = await openDB()
-        const count = await db.count('memos')
-        setOfflineCount(count)
-      } catch {
-        setOfflineCount(0)
-      }
+  const refreshOfflineCount = useCallback(async () => {
+    try {
+      const memos = await listQueuedMemos()
+      setOfflineCount(memos.length)
+    } catch (err) {
+      setSyncError(err instanceof Error ? `Local memo storage unavailable: ${err.message}` : 'Local memo storage unavailable')
     }
-    updateOfflineCount()
-    const interval = setInterval(updateOfflineCount, 5000)
-    return () => clearInterval(interval)
   }, [])
+
+  const syncQueuedMemos = useCallback(async () => {
+    if (!navigator.onLine || syncingRef.current) return
+    syncingRef.current = true
+    try {
+      const queued = (await listQueuedMemos()).sort((a, b) => a.queuedAt - b.queuedAt)
+      for (const memo of queued) {
+        try {
+          await api.memos.upload(
+            new File([memo.blob], memo.fileName, { type: memo.blob.type }),
+            memo.kind || 'quote',
+            memo.quoteId,
+            {
+              customerName: memo.customerName,
+              siteAddress: memo.siteAddress,
+              basedOnVersion: memo.basedOnVersion,
+            },
+          )
+          await deleteQueuedMemo(memo.id)
+          setSyncError('')
+        } catch (err) {
+          setSyncError(err instanceof Error ? err.message : 'A saved memo could not be synced')
+          break
+        }
+      }
+      await refreshOfflineCount()
+    } catch (err) {
+      setSyncError(err instanceof Error ? `Could not access saved memos: ${err.message}` : 'Could not access saved memos')
+    } finally {
+      syncingRef.current = false
+    }
+  }, [refreshOfflineCount])
+
+  useEffect(() => {
+    void refreshOfflineCount()
+    void syncQueuedMemos()
+    const sync = () => void syncQueuedMemos()
+    window.addEventListener('online', sync)
+    const interval = setInterval(sync, 5000)
+    return () => {
+      window.removeEventListener('online', sync)
+      clearInterval(interval)
+    }
+  }, [refreshOfflineCount, syncQueuedMemos])
 
   useEffect(() => {
     if (!recording || !canvasRef.current) return
@@ -102,11 +163,11 @@ export default function Record() {
       source.connect(analyser)
       analyserRef.current = analyser
 
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-          ? 'audio/webm;codecs=opus'
-          : 'audio/webm',
-      })
+      const mimeType = ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4', 'audio/webm;codecs=opus', 'audio/webm']
+        .find(type => MediaRecorder.isTypeSupported(type))
+      const mediaRecorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream)
       mediaRecorderRef.current = mediaRecorder
       chunksRef.current = []
 
@@ -167,11 +228,32 @@ export default function Record() {
 
     setUploading(true)
     try {
-      const file = new File([audioBlob], `memo-${Date.now()}.webm`, { type: audioBlob.type })
-      const result = await api.memos.upload(file, 'quote')
+      const file = new File([audioBlob], memoFileName(audioBlob.type), { type: audioBlob.type })
+      const result = await api.memos.upload(file, memoKind, quoteId, {
+        customerName: customer,
+        siteAddress: site,
+        basedOnVersion,
+      })
       navigate(`/app/review/${result.memo_id}`)
     } catch (err: any) {
-      alert(err.message || 'Upload failed')
+      if (!navigator.onLine || !(err instanceof Error && 'status' in err)) {
+        try {
+          await saveQueuedMemo(audioBlob, {
+            kind: memoKind,
+            quoteId,
+            customerName: customer,
+            siteAddress: site,
+            basedOnVersion,
+          })
+          setAudioBlob(null)
+          setSyncError('Offline memo saved. It will sync when a connection is available.')
+          await refreshOfflineCount()
+        } catch (storageError) {
+          alert(storageError instanceof Error ? `Could not save memo locally: ${storageError.message}` : 'Could not save memo locally')
+        }
+      } else {
+        alert(err.message || 'Upload failed')
+      }
     } finally {
       setUploading(false)
     }
@@ -186,29 +268,38 @@ export default function Record() {
   return (
     <div className="space-y-6">
       <div className="card p-4 space-y-3">
-        <h2 className="font-display text-lg font-semibold text-slate-ink">Job Details</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-slate-ink/70 mb-1">Customer</label>
-            <input
-              type="text"
-              value={customer}
-              onChange={(e) => setCustomer(e.target.value)}
-              className="input-field"
-              placeholder="Mr Smith"
-            />
+        <h2 className="font-display text-lg font-semibold text-slate-ink">
+          {memoKind === 'variation' ? 'Record Variation' : 'Job Details'}
+        </h2>
+        {memoKind === 'variation' && (
+          <p className="text-sm text-slate-ink/60">
+            This memo will be attached to quote {quoteId || '—'}, version {basedOnVersion || '—'}.
+          </p>
+        )}
+        {memoKind === 'quote' && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-slate-ink/70 mb-1">Customer</label>
+              <input
+                type="text"
+                value={customer}
+                onChange={(e) => setCustomer(e.target.value)}
+                className="input-field"
+                placeholder="Mr Smith"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-ink/70 mb-1">Site Address</label>
+              <input
+                type="text"
+                value={site}
+                onChange={(e) => setSite(e.target.value)}
+                className="input-field"
+                placeholder="14 Oak Road"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-ink/70 mb-1">Site Address</label>
-            <input
-              type="text"
-              value={site}
-              onChange={(e) => setSite(e.target.value)}
-              className="input-field"
-              placeholder="14 Oak Road"
-            />
-          </div>
-        </div>
+        )}
       </div>
 
       <div className="card p-6 space-y-6">
@@ -257,7 +348,11 @@ export default function Record() {
                 disabled={uploading}
                 className="btn-primary w-full text-lg"
               >
-                {uploading ? 'Processing...' : 'Upload & Generate Quote'}
+                {uploading
+                  ? 'Processing...'
+                  : memoKind === 'variation'
+                    ? 'Upload Variation Memo'
+                    : 'Upload & Generate Quote'}
               </button>
               <button
                 onClick={() => {
@@ -276,7 +371,9 @@ export default function Record() {
               <div className="w-24 h-24 rounded-full bg-cold-blue/10 flex items-center justify-center mx-auto text-4xl">
                 🎙️
               </div>
-              <h3 className="font-display text-xl font-semibold text-slate-ink">Record Voice Memo</h3>
+              <h3 className="font-display text-xl font-semibold text-slate-ink">
+                {memoKind === 'variation' ? 'Record Variation Memo' : 'Record Voice Memo'}
+              </h3>
               <p className="text-slate-ink/60">
                 Tap the button below and describe the job. We'll transcribe and generate a quote.
               </p>
@@ -307,12 +404,13 @@ export default function Record() {
           </div>
         </div>
       )}
+      {syncError && <p role="status" className="text-sm text-slate-ink/70">{syncError}</p>}
     </div>
   )
 }
 
 // Simple IndexedDB wrapper
-async function openDB(): Promise<any> {
+async function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('TalkQuote', 1)
     request.onerror = () => reject(request.error)
@@ -323,5 +421,47 @@ async function openDB(): Promise<any> {
         db.createObjectStore('memos', { keyPath: 'id' })
       }
     }
+  })
+}
+
+function memoFileName(mimeType: string): string {
+  const extension = mimeType.includes('mp4') ? 'm4a' : mimeType.includes('ogg') ? 'ogg' : 'webm'
+  return `memo-${Date.now()}.${extension}`
+}
+
+async function listQueuedMemos(): Promise<QueuedMemo[]> {
+  const db = await openDB()
+  return new Promise((resolve, reject) => {
+    const request = db.transaction('memos', 'readonly').objectStore('memos').getAll()
+    request.onsuccess = () => resolve(request.result as QueuedMemo[])
+    request.onerror = () => reject(request.error)
+  })
+}
+
+async function saveQueuedMemo(
+  blob: Blob,
+  metadata: Omit<QueuedMemo, 'id' | 'blob' | 'fileName' | 'queuedAt'>,
+): Promise<void> {
+  const db = await openDB()
+  const memo: QueuedMemo = {
+    id: crypto.randomUUID(),
+    blob,
+    fileName: memoFileName(blob.type),
+    queuedAt: Date.now(),
+    ...metadata,
+  }
+  await new Promise<void>((resolve, reject) => {
+    const request = db.transaction('memos', 'readwrite').objectStore('memos').put(memo)
+    request.onsuccess = () => resolve()
+    request.onerror = () => reject(request.error)
+  })
+}
+
+async function deleteQueuedMemo(id: string): Promise<void> {
+  const db = await openDB()
+  await new Promise<void>((resolve, reject) => {
+    const request = db.transaction('memos', 'readwrite').objectStore('memos').delete(id)
+    request.onsuccess = () => resolve()
+    request.onerror = () => reject(request.error)
   })
 }

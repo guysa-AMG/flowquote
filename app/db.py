@@ -29,6 +29,13 @@ CREATE TABLE IF NOT EXISTS business (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS auth_pin_setting (
+    business_id TEXT PRIMARY KEY,
+    pin_hash TEXT NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (business_id) REFERENCES business (id)
+);
+
 CREATE TABLE IF NOT EXISTS price_item (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     business_id TEXT NOT NULL,
@@ -60,6 +67,9 @@ CREATE TABLE IF NOT EXISTS memo (
     quote_id TEXT,
     kind TEXT NOT NULL CHECK(kind IN ('quote', 'variation')),
     audio_hash TEXT,
+    customer_name TEXT,
+    site_address TEXT,
+    based_on_version INTEGER,
     status TEXT NOT NULL DEFAULT 'uploaded',
     transcript TEXT,
     extraction_json TEXT,
@@ -195,6 +205,7 @@ def init_db(db_path: str | Path | None = None) -> None:
     with get_db(db_path) as conn:
         conn.executescript(SCHEMA_SQL)
         _migrate_variation_schema(conn)
+        _migrate_memo_metadata(conn)
         # Seed default business if none exists
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM business WHERE id = 'biz_default'")
@@ -221,6 +232,19 @@ def _migrate_variation_schema(conn: sqlite3.Connection) -> None:
     for name, definition in additions.items():
         if name not in columns:
             conn.execute(f"ALTER TABLE variation ADD COLUMN {name} {definition}")
+
+
+def _migrate_memo_metadata(conn: sqlite3.Connection) -> None:
+    """Add client and variation context to memos created by earlier versions."""
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(memo)").fetchall()}
+    additions = {
+        "customer_name": "TEXT",
+        "site_address": "TEXT",
+        "based_on_version": "INTEGER",
+    }
+    for name, definition in additions.items():
+        if name not in columns:
+            conn.execute(f"ALTER TABLE memo ADD COLUMN {name} {definition}")
 
 
 def seed_default_price_items(conn: sqlite3.Connection, business_id: str = "biz_default") -> None:

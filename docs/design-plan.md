@@ -109,9 +109,9 @@
 - **Fonts:** Self-hosted via `@fontsource` (Bricolage Grotesque, Instrument Sans). Preloaded in HTML, precached by service worker.
 
 ### 6. Component Checklist (Field App)
-- [ ] Record screen: big button, live waveform, timer, offline queue badge
-- [ ] Review screen: transcript, line items with outcome badges, resolve flow
-- [ ] Quote preview: tabular nums, totals, share sheet, variation button
+- [x] Record screen: big button, live waveform, timer, offline queue badge
+- [x] Review screen: transcript, line items with outcome badges, resolve flow
+- [x] Quote preview: tabular nums, totals, share sheet, sent-version variation flow
 - [ ] Price list: import CSV, edit, alias manager
 - [ ] Quote history: list, detail, audit trail
 - [ ] Settings: VAT, currency, audio retention, PIN change
@@ -138,8 +138,7 @@
 - **Color semantics:** Hi-vis yellow for ambiguous (requires dark text), hot red for no-match — mirrors site safety colors.
 
 ### 9. Next Steps
-1. Implement field app in React + Vite PWA (`/app` route)
-2. Implement showcase site (`/showcase` route) with GSAP pipe-run hero
-3. Add `@fontsource` packages and precache in service worker
-4. Configure GSAP matchMedia for all animations
-5. Add Lenis to showcase only with `data-lenis-prevent`
+1. Finish price-list editing and alias management screens.
+2. Add quote detail and audit-trail views to quote history.
+3. Add VAT, currency, and audio-retention settings only with corresponding validated backend APIs.
+4. Verify recording on a real phone over HTTPS and rehearse the hotspot/offline demo.

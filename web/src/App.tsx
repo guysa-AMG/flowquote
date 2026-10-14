@@ -1,6 +1,5 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
-import { useEffect } from 'react'
 import { useAuth } from './hooks/useAuth'
 import Layout from './components/Layout'
 import Login from './app/Login'
@@ -50,12 +49,6 @@ function PublicRoute() {
 }
 
 export default function App() {
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {})
-    }
-  }, [])
-
   return (
     <Routes>
       <Route element={<PublicRoute />}>

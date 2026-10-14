@@ -18,7 +18,9 @@ def test_process_job_persists_quote_version(tmp_path):
     with get_db(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO memo (id, business_id, kind, status, transcript) VALUES (?, 'biz_default', 'quote', 'queued', ?)",
+            """INSERT INTO memo
+               (id, business_id, kind, status, transcript, customer_name, site_address)
+               VALUES (?, 'biz_default', 'quote', 'queued', ?, 'Manual Client', '3 Sample Road')""",
             (memo_id, "15mm copper elbow and two hours labour"),
         )
         cursor.execute(
@@ -52,6 +54,12 @@ def test_process_job_persists_quote_version(tmp_path):
         memo = cursor.fetchone()
         assert memo["status"] == "completed"
         assert "15mm copper elbow" in memo["transcript"]
+        quote = cursor.execute(
+            "SELECT customer_name, site_address FROM quote WHERE id = ?",
+            (result["quote_id"],),
+        ).fetchone()
+        assert quote["customer_name"] == "Manual Client"
+        assert quote["site_address"] == "3 Sample Road"
 
 
 def test_ambiguous_line_is_not_priced_until_human_resolution(tmp_path, monkeypatch):
@@ -104,3 +112,55 @@ def test_vague_quantity_is_not_defaulted_or_priced(tmp_path, monkeypatch):
     assert quote_lines[0]["price_item_id"] is None
     assert quote_lines[0]["unit_price_cents"] == 0
     assert quote_lines[0]["line_total_cents"] == 0
+
+
+def test_variation_memo_is_extracted_without_creating_a_new_quote(tmp_path, monkeypatch):
+    db_path = tmp_path / "variation-pipeline.sqlite"
+    monkeypatch.setattr(settings, "database_path", str(db_path))
+    init_db(db_path)
+    with get_db(db_path) as conn:
+        conn.execute(
+            "INSERT INTO quote (id, business_id, number, status) "
+            "VALUES ('base_quote', 'biz_default', 'Q-BASE', 'sent')"
+        )
+        conn.execute(
+            """INSERT INTO quote_version
+               (id, quote_id, version, subtotal_cents, vat_cents, total_cents, sent_at)
+               VALUES ('base_version', 'base_quote', 1, 1000, 150, 1150, CURRENT_TIMESTAMP)"""
+        )
+        conn.execute(
+            """INSERT INTO memo
+               (id, business_id, quote_id, kind, status, transcript, based_on_version)
+               VALUES ('variation_memo', 'biz_default', 'base_quote', 'variation',
+                       'queued', 'add one elbow', 1)"""
+        )
+        conn.execute(
+            "INSERT INTO job (id, memo_id, state) VALUES ('variation_job', 'variation_memo', 'queued')"
+        )
+
+    extraction = Extraction(
+        lines=[
+            SpokenLine(
+                spoken="15mm copper elbow",
+                kind="part",
+                quantity=Decimal("1"),
+                unit="each",
+            )
+        ]
+    )
+    with patch("app.jobs.extract_with_llm", new_callable=AsyncMock) as mock_extract:
+        mock_extract.return_value = extraction
+        result = asyncio.run(process_job("variation_job"))
+
+    assert result == {
+        "memo_id": "variation_memo",
+        "quote_id": "base_quote",
+        "kind": "variation",
+    }
+    with get_db(db_path) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM quote").fetchone()[0] == 1
+        memo = conn.execute(
+            "SELECT status, extraction_json FROM memo WHERE id = 'variation_memo'"
+        ).fetchone()
+        assert memo["status"] == "completed"
+        assert "15mm copper elbow" in memo["extraction_json"]

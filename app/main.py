@@ -1,7 +1,9 @@
 """FastAPI entrypoint for TalkQuote (PLAN.md §10)."""
 
 import asyncio
+import csv
 import hashlib
+import io
 import json
 import re
 import uuid
@@ -18,6 +20,7 @@ from fastapi.security import HTTPBearer
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.audit import log_audit_event
+from app.auth import change_pin as persist_pin_change
 from app.auth import require_auth, verify_pin
 from app.config import APP_NAME, settings
 from app.db import fetch_alias_map, get_db, init_db
@@ -72,6 +75,13 @@ class LoginRequest(BaseModel):
 
 class LoginResponse(BaseModel):
     token: str
+
+
+class PinChangeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    current_pin: str = Field(pattern=r"^\d{4}$")
+    new_pin: str = Field(pattern=r"^\d{4}$")
 
 
 class QuoteApprovalRequest(BaseModel):
@@ -319,9 +329,143 @@ def get_system():
     }
 
 
+@app.get("/api/pricelist")
+def get_pricelist(_token: str = Depends(require_auth)):
+    with get_db() as conn:
+        rows = conn.execute(
+            """SELECT pi.id, pi.sku, pi.name, pi.unit, pi.price_cents, pi.category,
+                      pi.attrs_json, pi.active, b.currency
+               FROM price_item pi JOIN business b ON b.id = pi.business_id
+               WHERE pi.business_id = ? AND pi.active = 1 ORDER BY pi.name, pi.sku""",
+            (settings.default_business_id,),
+        ).fetchall()
+        return [
+            {
+                **dict(row),
+                "attrs": json.loads(row["attrs_json"] or "{}"),
+            }
+            for row in rows
+        ]
+
+
+@app.post("/api/pricelist/import")
+async def import_pricelist(
+    file: UploadFile = File(...),  # noqa: B008
+    _token: str = Depends(require_auth),
+):
+    raw = await file.read(5 * 1024 * 1024 + 1)
+    if len(raw) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="CSV file exceeds 5 MiB")
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise HTTPException(status_code=422, detail="CSV must be UTF-8 encoded") from exc
+    reader = csv.DictReader(io.StringIO(text))
+    required = {"sku", "name", "unit", "price_cents", "category"}
+    if not reader.fieldnames or not required.issubset(reader.fieldnames):
+        raise HTTPException(
+            status_code=422,
+            detail="CSV requires sku, name, unit, price_cents, and category columns",
+        )
+
+    parsed_rows = []
+    for line_number, row in enumerate(reader, start=2):
+        sku = (row.get("sku") or "").strip()
+        name = (row.get("name") or "").strip()
+        unit = (row.get("unit") or "").strip()
+        category = (row.get("category") or "").strip().casefold()
+        try:
+            price_cents = int(row.get("price_cents") or "")
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid integer price_cents on CSV row {line_number}",
+            ) from exc
+        try:
+            attrs = json.loads(row.get("attrs_json") or "{}")
+        except json.JSONDecodeError as exc:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid attrs_json on CSV row {line_number}",
+            ) from exc
+        if not isinstance(attrs, dict):
+            raise HTTPException(
+                status_code=422,
+                detail=f"attrs_json must be an object on CSV row {line_number}",
+            )
+        if not sku or not name or not unit or not category or price_cents < 0:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Missing or invalid required value on CSV row {line_number}",
+            )
+        parsed_rows.append((sku, name, unit, price_cents, category, json.dumps(attrs)))
+    if not parsed_rows:
+        raise HTTPException(status_code=422, detail="CSV contains no price items")
+
+    with get_db() as conn:
+        for sku, name, unit, price_cents, category, attrs_json in parsed_rows:
+            existing = conn.execute(
+                "SELECT id FROM price_item WHERE business_id = ? AND sku = ?",
+                (settings.default_business_id, sku),
+            ).fetchone()
+            if existing:
+                conn.execute(
+                    """UPDATE price_item SET name = ?, unit = ?, price_cents = ?,
+                       category = ?, attrs_json = ?, active = 1,
+                       updated_at = CURRENT_TIMESTAMP WHERE id = ?""",
+                    (name, unit, price_cents, category, attrs_json, existing["id"]),
+                )
+            else:
+                conn.execute(
+                    """INSERT INTO price_item
+                       (business_id, sku, name, unit, price_cents, category, attrs_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        settings.default_business_id,
+                        sku,
+                        name,
+                        unit,
+                        price_cents,
+                        category,
+                        attrs_json,
+                    ),
+                )
+        log_audit_event(
+            conn,
+            settings.default_business_id,
+            "price_list",
+            settings.default_business_id,
+            "imported",
+            {"item_count": len(parsed_rows)},
+            actor="plumber",
+        )
+    return {"imported": len(parsed_rows)}
+
+
 @app.post("/api/auth/login", response_model=LoginResponse)
 def login(req: LoginRequest):
+    init_db()
     return {"token": verify_pin(req.pin)}
+
+
+@app.post("/api/auth/pin")
+def update_pin(
+    request: PinChangeRequest,
+    _token: str = Depends(require_auth),
+):
+    init_db()
+    persist_pin_change(request.current_pin, request.new_pin)
+    with get_db() as conn:
+        log_audit_event(
+            conn,
+            settings.default_business_id,
+            "auth",
+            settings.default_business_id,
+            "pin_changed",
+            {},
+            actor="plumber",
+        )
+    return {"status": "changed"}
 
 
 @app.post("/api/memos")
@@ -329,9 +473,41 @@ async def upload_memo(
     file: UploadFile = File(...),  # noqa: B008
     kind: str = Form("quote"),
     quote_id: str | None = Form(None),
+    customer_name: str | None = Form(None),
+    site_address: str | None = Form(None),
+    based_on_version: int | None = Form(None),
     _token: str = Depends(require_auth),
 ):
     init_db()
+    if kind not in {"quote", "variation"}:
+        raise HTTPException(status_code=422, detail="Memo kind must be quote or variation")
+    if kind == "variation":
+        if not quote_id or based_on_version is None or based_on_version < 1:
+            raise HTTPException(
+                status_code=422,
+                detail="Variation memos require a quote and sent version",
+            )
+        with get_db() as conn:
+            base_version = conn.execute(
+                """SELECT q.business_id, qv.sent_at FROM quote q
+                   JOIN quote_version qv ON qv.quote_id = q.id
+                   WHERE q.id = ? AND qv.version = ?""",
+                (quote_id, based_on_version),
+            ).fetchone()
+            if (
+                base_version is None
+                or base_version["business_id"] != settings.default_business_id
+                or base_version["sent_at"] is None
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Variation must reference a sent version of this business quote",
+                )
+    elif quote_id is not None or based_on_version is not None:
+        raise HTTPException(status_code=422, detail="Quote memos cannot reference a variation")
+
+    customer_name = (customer_name or "").strip() or None
+    site_address = (site_address or "").strip() or None
     memo_id = f"memo_{uuid.uuid4().hex[:12]}"
     job_id = f"job_{uuid.uuid4().hex[:12]}"
     transcript = ""
@@ -360,9 +536,21 @@ async def upload_memo(
     with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute(
-            """INSERT INTO memo (id, business_id, quote_id, kind, status, transcript, audio_hash)
-               VALUES (?, ?, ?, ?, 'queued', ?, ?)""",
-            (memo_id, settings.default_business_id, quote_id, kind, transcript, audio_hash),
+            """INSERT INTO memo
+               (id, business_id, quote_id, kind, status, transcript, audio_hash,
+                customer_name, site_address, based_on_version)
+               VALUES (?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?)""",
+            (
+                memo_id,
+                settings.default_business_id,
+                quote_id,
+                kind,
+                transcript,
+                audio_hash,
+                customer_name,
+                site_address,
+                based_on_version,
+            ),
         )
         cursor.execute(
             "INSERT INTO job (id, memo_id, state) VALUES (?, ?, 'queued')",
@@ -432,6 +620,25 @@ def get_memo(memo_id: str, _token: str = Depends(require_auth)):
         if row is None:
             raise HTTPException(status_code=404, detail="Memo not found")
         return dict(row)
+
+
+@app.get("/api/quotes")
+def list_quotes(_token: str = Depends(require_auth)):
+    with get_db() as conn:
+        rows = conn.execute(
+            """SELECT q.id, q.number, q.customer_name, q.site_address, q.status, q.created_at,
+                      qv.total_cents, b.currency
+               FROM quote q JOIN business b ON b.id = q.business_id
+               LEFT JOIN quote_version qv ON qv.id = (
+                   SELECT latest.id FROM quote_version latest
+                   WHERE latest.quote_id = q.id
+                   ORDER BY latest.version DESC LIMIT 1
+               )
+               WHERE q.business_id = ?
+               ORDER BY q.created_at DESC, q.number DESC""",
+            (settings.default_business_id,),
+        ).fetchall()
+        return [dict(row) for row in rows]
 
 
 @app.get("/api/quotes/{quote_id}")

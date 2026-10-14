@@ -15,3 +15,4 @@
 | ruff | >=0.5 | MIT | Linter | Yes |
 | @fontsource/bricolage-grotesque | ^5.3.0 | SIL OFL 1.1 | Self-hosted display font, bundled with the PWA | Yes |
 | @fontsource/instrument-sans | ^5.3.0 | SIL OFL 1.1 | Self-hosted body font, bundled with the PWA | Yes |
+| vite-plugin-pwa | ^0.21.2 | MIT | Generate the service worker and precache the bundled PWA assets | Yes |

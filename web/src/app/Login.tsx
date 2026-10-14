@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { BRAND } from '../brand'
@@ -67,10 +67,6 @@ export default function Login() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
-        <p className="mt-6 text-center text-xs text-slate-ink/50">
-          Default PIN: <code className="bg-galvanised px-1.5 py-0.5 rounded">1234</code>
-        </p>
       </div>
     </div>
   )

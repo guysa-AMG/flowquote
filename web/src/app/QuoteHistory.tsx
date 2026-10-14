@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { api } from '../lib/api'
+import { formatCents } from '../lib/utils'
 
 interface Quote {
   id: string
@@ -8,12 +10,15 @@ interface Quote {
   site_address: string | null
   status: string
   created_at: string
+  total_cents: number | null
+  currency: string
 }
 
 export default function QuoteHistory() {
   const navigate = useNavigate()
   const [quotes, setQuotes] = useState<Quote[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     loadQuotes()
@@ -21,9 +26,10 @@ export default function QuoteHistory() {
 
   const loadQuotes = async () => {
     try {
-      setQuotes([])
+      setQuotes(await api.quotes.list())
     } catch (err) {
       console.error('Failed to load quotes:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load quotes')
     } finally {
       setLoading(false)
     }
@@ -40,6 +46,7 @@ export default function QuoteHistory() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold text-slate-ink">Quote History</h1>
+      {error && <p role="alert" className="text-sm text-hot-red">{error}</p>}
 
       {quotes.length === 0 ? (
         <div className="card p-12 text-center">
@@ -80,7 +87,9 @@ export default function QuoteHistory() {
                       {quote.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums font-medium">—</td>
+                  <td className="px-4 py-3 text-right tabular-nums font-medium">
+                    {quote.total_cents === null ? '—' : formatCents(quote.total_cents, quote.currency)}
+                  </td>
                   <td className="px-4 py-3 text-slate-ink/60">
                     {new Date(quote.created_at).toLocaleDateString()}
                   </td>

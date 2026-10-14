@@ -16,6 +16,7 @@ services:
       - TALKQUOTE_OLLAMA_HOST=http://ollama:11434
       - TALKQUOTE_DATABASE_PATH=/app/db/talkquote.sqlite
       - TALKQUOTE_AUDIO_STORAGE_DIR=/app/storage/audio
+      - TALKQUOTE_AUTH_PIN=${TALKQUOTE_AUTH_PIN:?Set TALKQUOTE_AUTH_PIN to a four-digit PIN}
       - TALKQUOTE_DEBUG=false
       - TALKQUOTE_WHISPER_LOCAL_FILES_ONLY=true
     depends_on:

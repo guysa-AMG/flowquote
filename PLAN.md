@@ -432,10 +432,10 @@ Pick a name that is short, speakable on a phone call, and works as a .tech domai
 - [ ] Design plan written and reviewed (`docs/design-plan.md`)
 
 ### Day 4: review flow and variations
-- [ ] Review screen with flag resolution, quote preview, Web Share PDF
-- [ ] Variation orders: memo, priced lines, linked PDF, typed-name approval, audit entry
-- [ ] Learn-from-corrections: resolving a flag can save an **alias** (never a price)
-- [ ] Record the eval memos, write `truth.jsonl`, add Sentry spans
+- [x] Review screen with flag resolution, quote preview, Web Share PDF
+- [x] Variation orders: memo, priced lines, linked PDF, typed-name approval, audit entry
+- [x] Learn-from-corrections: resolving a flag can save an **alias** (never a price)
+- [x] Synthetic eval fixtures and `truth.jsonl`; local PII-free stage tracing (Sentry export deferred to honor the no-network rule)
 
 ### Day 5: measure and fix
 - [x] Run `make eval`: baselines (typed synthetic baseline only; audio/model comparisons not measured)
