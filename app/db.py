@@ -6,10 +6,12 @@ Rules (PLAN.md §3, §9):
 - Sent quote versions are immutable.
 - Everything audited.
 """
+
 import sqlite3
-from pathlib import Path
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator
+from pathlib import Path
+
 from app.config import settings
 
 SCHEMA_SQL = """
@@ -99,13 +101,38 @@ CREATE TABLE IF NOT EXISTS quote_version (
 
 CREATE TABLE IF NOT EXISTS variation (
     id TEXT PRIMARY KEY,
+    business_id TEXT NOT NULL,
     quote_id TEXT NOT NULL,
+    memo_id TEXT NOT NULL,
     based_on_version INTEGER NOT NULL,
     number TEXT NOT NULL,
     status TEXT NOT NULL CHECK(status IN ('pending', 'approved', 'rejected')),
     approved_by_name TEXT,
     approved_at TIMESTAMP,
-    FOREIGN KEY (quote_id) REFERENCES quote (id)
+    subtotal_cents INTEGER NOT NULL DEFAULT 0,
+    vat_cents INTEGER NOT NULL DEFAULT 0,
+    total_cents INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (business_id) REFERENCES business (id),
+    FOREIGN KEY (quote_id) REFERENCES quote (id),
+    FOREIGN KEY (memo_id) REFERENCES memo (id)
+);
+
+CREATE TABLE IF NOT EXISTS variation_line (
+    id TEXT PRIMARY KEY,
+    business_id TEXT NOT NULL,
+    variation_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    spoken TEXT NOT NULL,
+    price_item_id INTEGER,
+    quantity_milli INTEGER NOT NULL,
+    unit TEXT,
+    unit_price_cents INTEGER NOT NULL,
+    match_outcome TEXT NOT NULL,
+    match_score REAL NOT NULL DEFAULT 0,
+    note TEXT,
+    FOREIGN KEY (business_id) REFERENCES business (id),
+    FOREIGN KEY (variation_id) REFERENCES variation (id),
+    FOREIGN KEY (price_item_id) REFERENCES price_item (id)
 );
 
 CREATE TABLE IF NOT EXISTS quote_line (
@@ -144,6 +171,7 @@ CREATE INDEX IF NOT EXISTS idx_alias_phrase ON alias(phrase);
 CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_log(entity, entity_id);
 """
 
+
 def get_connection(db_path: str | Path | None = None) -> sqlite3.Connection:
     path = db_path or settings.database_path
     conn = sqlite3.connect(path, check_same_thread=False)
@@ -151,6 +179,7 @@ def get_connection(db_path: str | Path | None = None) -> sqlite3.Connection:
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute("PRAGMA foreign_keys=ON;")
     return conn
+
 
 @contextmanager
 def get_db(db_path: str | Path | None = None) -> Generator[sqlite3.Connection, None, None]:
@@ -161,9 +190,11 @@ def get_db(db_path: str | Path | None = None) -> Generator[sqlite3.Connection, N
     finally:
         conn.close()
 
+
 def init_db(db_path: str | Path | None = None) -> None:
     with get_db(db_path) as conn:
         conn.executescript(SCHEMA_SQL)
+        _migrate_variation_schema(conn)
         # Seed default business if none exists
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM business WHERE id = 'biz_default'")
@@ -173,3 +204,34 @@ def init_db(db_path: str | Path | None = None) -> None:
                    VALUES ('biz_default', 'Default Plumbing Co', ?, ?, 'en-ZA')""",
                 (settings.default_currency, settings.default_vat_rate_bp),
             )
+
+
+def _migrate_variation_schema(conn: sqlite3.Connection) -> None:
+    """Add Day 4 variation fields to databases created by earlier versions."""
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(variation)").fetchall()}
+    additions = {
+        "business_id": "TEXT REFERENCES business(id)",
+        "memo_id": "TEXT REFERENCES memo(id)",
+        "subtotal_cents": "INTEGER NOT NULL DEFAULT 0",
+        "vat_cents": "INTEGER NOT NULL DEFAULT 0",
+        "total_cents": "INTEGER NOT NULL DEFAULT 0",
+    }
+    for name, definition in additions.items():
+        if name not in columns:
+            conn.execute(f"ALTER TABLE variation ADD COLUMN {name} {definition}")
+
+
+def fetch_alias_map(conn: sqlite3.Connection, business_id: str = "biz_default") -> dict[str, str]:
+    """Map configured aliases to canonical names for the matching pipeline."""
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT a.phrase, p.name
+        FROM alias a
+        JOIN price_item p ON p.id = a.price_item_id AND p.business_id = a.business_id
+        WHERE a.business_id = ? AND p.active = 1
+        ORDER BY a.id
+        """,
+        (business_id,),
+    )
+    return {row["phrase"]: row["name"] for row in cursor.fetchall()}

@@ -1,7 +1,9 @@
 """PIN-based authentication for local network protection (PLAN.md §9, §10)."""
 import secrets
+
 from fastapi import HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from app.config import settings
 
 security = HTTPBearer(auto_error=False)

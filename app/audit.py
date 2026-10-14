@@ -7,6 +7,7 @@ import json
 import sqlite3
 from typing import Any
 
+
 def log_audit_event(
     conn: sqlite3.Connection,
     business_id: str,

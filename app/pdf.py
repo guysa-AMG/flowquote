@@ -6,6 +6,7 @@ line_total = round_half_up(qty * unit_price), subtotal = sum, vat = round_half_u
 """
 from pathlib import Path
 from typing import Any
+
 from jinja2 import Environment, FileSystemLoader
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
