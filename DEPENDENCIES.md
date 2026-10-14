@@ -13,3 +13,5 @@
 | pytest | >=8.2 | MIT | Test runner | Yes |
 | pytest-socket | >=0.6 | MIT | Enforce no-network in tests | Yes |
 | ruff | >=0.5 | MIT | Linter | Yes |
+| @fontsource/bricolage-grotesque | ^5.3.0 | SIL OFL 1.1 | Self-hosted display font, bundled with the PWA | Yes |
+| @fontsource/instrument-sans | ^5.3.0 | SIL OFL 1.1 | Self-hosted body font, bundled with the PWA | Yes |

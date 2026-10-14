@@ -2,13 +2,16 @@
 
 Renders quotes and variation orders to PDF.
 Documents rounding rule in footer:
-line_total = round_half_up(qty * unit_price), subtotal = sum, vat = round_half_up(subtotal * vat_rate / 100).
+line_total = round_half_up(qty * unit_price), subtotal = sum,
+vat = round_half_up(subtotal * vat_rate / 100).
 """
 from pathlib import Path
 from typing import Any
+
 from jinja2 import Environment, FileSystemLoader
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
+
 
 class PDFGenerator:
     def __init__(self, templates_dir: Path | None = None):

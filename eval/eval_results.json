@@ -1,0 +1,810 @@
+{
+  "dataset": {
+    "kind": "synthetic typed transcripts",
+    "memo_count": 21,
+    "extractor": "local heuristic parser; no ASR or LLM inference"
+  },
+  "metrics_definition": {
+    "item_precision_recall": "one-to-one SKU/candidate matching over expected items",
+    "quantity_accuracy": "correct quantities divided by expected items with known quantity; missing predictions count incorrect",
+    "confident_wrong_rate": "incorrect confident lines divided by all confident lines",
+    "flag_rate": "ambiguous and no-match lines divided by all predicted lines",
+    "price_correctness": "confident line unit price and integer line total checked against catalog"
+  },
+  "variants": {
+    "no_aliases": {
+      "total_memos": 21,
+      "line_count": 31,
+      "expected_item_count": 29,
+      "predicted_item_count": 19,
+      "item_recall": 0.6206896551724138,
+      "item_precision": 0.9473684210526315,
+      "quantity_expected_count": 26,
+      "quantity_correct_count": 16,
+      "quantity_accuracy": 0.6153846153846154,
+      "flagged_line_count": 24,
+      "flag_rate": 0.7741935483870968,
+      "confident_line_count": 7,
+      "confident_wrong_count": 0,
+      "confident_wrong_rate": 0.0,
+      "price_correctness": true
+    },
+    "seeded_aliases": {
+      "total_memos": 21,
+      "line_count": 31,
+      "expected_item_count": 29,
+      "predicted_item_count": 30,
+      "item_recall": 0.9310344827586207,
+      "item_precision": 0.9,
+      "quantity_expected_count": 26,
+      "quantity_correct_count": 25,
+      "quantity_accuracy": 0.9615384615384616,
+      "flagged_line_count": 12,
+      "flag_rate": 0.3870967741935484,
+      "confident_line_count": 19,
+      "confident_wrong_count": 0,
+      "confident_wrong_rate": 0.0,
+      "price_correctness": true
+    }
+  },
+  "comparisons_not_measured": {
+    "asr_hotwords_on_off": "No local evaluation audio files are present.",
+    "llm_models": "No model comparison dataset/runner is configured; no inference was run."
+  },
+  "audio_files_available": 0,
+  "total_memos": 21,
+  "line_count": 31,
+  "expected_item_count": 29,
+  "predicted_item_count": 30,
+  "item_recall": 0.9310344827586207,
+  "item_precision": 0.9,
+  "quantity_expected_count": 26,
+  "quantity_correct_count": 25,
+  "quantity_accuracy": 0.9615384615384616,
+  "flagged_line_count": 12,
+  "flag_rate": 0.3870967741935484,
+  "confident_line_count": 19,
+  "confident_wrong_count": 0,
+  "confident_wrong_rate": 0.0,
+  "price_correctness": true,
+  "per_memo": [
+    {
+      "memo_id": "memo_01",
+      "recall": 0.5,
+      "precision": 0.5,
+      "quantity_accuracy": 0.5,
+      "flag_rate": 0.5,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 1,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "replaced 15mm copper elbow",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 77.15458276333788,
+          "price_item_id": 1,
+          "matched_sku": "COP-15-ELB",
+          "matched_name": "15mm Copper Elbow",
+          "unit_price_cents": 1850,
+          "line_total_cents": 1850,
+          "flag_reason": null
+        },
+        {
+          "spoken": "two hours labour",
+          "kind": "labour",
+          "quantity_milli": 2000,
+          "unit": "hours",
+          "quantity_vague": false,
+          "match_outcome": "ambiguous",
+          "match_score": 76.42857142857142,
+          "price_item_id": 41,
+          "matched_sku": "LBR-PLM-AFT",
+          "matched_name": "Plumbing Labour After Hours (per hour)",
+          "unit_price_cents": 95000,
+          "line_total_cents": 190000,
+          "flag_reason": "Unstated labour rate: standard and after-hours prices differ"
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_02",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 0.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 2,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "22mm copper elbow",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 88.23529411764706,
+          "price_item_id": 2,
+          "matched_sku": "COP-22-ELB",
+          "matched_name": "22mm Copper Elbow",
+          "unit_price_cents": 2950,
+          "line_total_cents": 2950,
+          "flag_reason": null
+        },
+        {
+          "spoken": "callout fee",
+          "kind": "callout",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 89.38967136150234,
+          "price_item_id": 42,
+          "matched_sku": "FEE-CALLOUT",
+          "matched_name": "Standard Call-out and Diagnostic Fee",
+          "unit_price_cents": 55000,
+          "line_total_cents": 55000,
+          "flag_reason": null
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_03",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 1.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 0,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "three 15mm copper tees",
+          "kind": "part",
+          "quantity_milli": 3000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "ambiguous",
+          "match_score": 79.87429289754871,
+          "price_item_id": 3,
+          "matched_sku": "COP-15-TEE",
+          "matched_name": "15mm Copper Equal Tee",
+          "unit_price_cents": 2400,
+          "line_total_cents": 7200,
+          "flag_reason": "Margin 1.2 below threshold 15.0"
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_04",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 1.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 0,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "a couple of 22mm copper couplers",
+          "kind": "part",
+          "quantity_milli": 0,
+          "unit": "each",
+          "quantity_vague": true,
+          "match_outcome": "ambiguous",
+          "match_score": 84.70588235294119,
+          "price_item_id": null,
+          "matched_sku": "COP-22-CPL",
+          "matched_name": "22mm Copper Coupler",
+          "unit_price_cents": 0,
+          "line_total_cents": 0,
+          "flag_reason": "Margin 7.0 below threshold 15.0"
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_05",
+      "recall": 0.5,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 1.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 0,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "some 15mm copper pipe",
+          "kind": "part",
+          "quantity_milli": 0,
+          "unit": "each",
+          "quantity_vague": true,
+          "match_outcome": "ambiguous",
+          "match_score": 86.2782859894078,
+          "price_item_id": null,
+          "matched_sku": "COP-15-PIP",
+          "matched_name": "15mm Copper Pipe Class 0 (5.5m)",
+          "unit_price_cents": 0,
+          "line_total_cents": 0,
+          "flag_reason": null
+        },
+        {
+          "spoken": "a few elbows",
+          "kind": "part",
+          "quantity_milli": 0,
+          "unit": "each",
+          "quantity_vague": true,
+          "match_outcome": "ambiguous",
+          "match_score": 0.0,
+          "price_item_id": null,
+          "matched_sku": null,
+          "matched_name": null,
+          "unit_price_cents": 0,
+          "line_total_cents": 0,
+          "flag_reason": "No matching item exceeded score threshold 75.0"
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_06",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 0.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 1,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "standard labour 4 hours",
+          "kind": "labour",
+          "quantity_milli": 4000,
+          "unit": "hours",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 85.80219780219781,
+          "price_item_id": 40,
+          "matched_sku": "LBR-PLM-STD",
+          "matched_name": "Plumbing Labour Standard (per hour)",
+          "unit_price_cents": 65000,
+          "line_total_cents": 260000,
+          "flag_reason": null
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_07",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 0.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 1,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "after hours labour 2 hours",
+          "kind": "labour",
+          "quantity_milli": 2000,
+          "unit": "hours",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 85.78947368421052,
+          "price_item_id": 41,
+          "matched_sku": "LBR-PLM-AFT",
+          "matched_name": "Plumbing Labour After Hours (per hour)",
+          "unit_price_cents": 95000,
+          "line_total_cents": 190000,
+          "flag_reason": null
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_08",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 0.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 1,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "overtime 3 hours",
+          "kind": "labour",
+          "quantity_milli": 3000,
+          "unit": "hours",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 85.78947368421052,
+          "price_item_id": 41,
+          "matched_sku": "LBR-PLM-AFT",
+          "matched_name": "Plumbing Labour After Hours (per hour)",
+          "unit_price_cents": 95000,
+          "line_total_cents": 285000,
+          "flag_reason": null
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_09",
+      "recall": 1.0,
+      "precision": 0.5,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 0.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 2,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "callout fee",
+          "kind": "callout",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 89.38967136150234,
+          "price_item_id": 42,
+          "matched_sku": "FEE-CALLOUT",
+          "matched_name": "Standard Call-out and Diagnostic Fee",
+          "unit_price_cents": 55000,
+          "line_total_cents": 55000,
+          "flag_reason": null
+        },
+        {
+          "spoken": "diagnostic",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 100.0,
+          "price_item_id": 42,
+          "matched_sku": "FEE-CALLOUT",
+          "matched_name": "Standard Call-out and Diagnostic Fee",
+          "unit_price_cents": 55000,
+          "line_total_cents": 55000,
+          "flag_reason": null
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_10",
+      "recall": 1.0,
+      "precision": 0.5,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 0.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 2,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "site visit",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 89.38967136150234,
+          "price_item_id": 42,
+          "matched_sku": "FEE-CALLOUT",
+          "matched_name": "Standard Call-out and Diagnostic Fee",
+          "unit_price_cents": 55000,
+          "line_total_cents": 55000,
+          "flag_reason": null
+        },
+        {
+          "spoken": "trip fee",
+          "kind": "callout",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 89.38967136150234,
+          "price_item_id": 42,
+          "matched_sku": "FEE-CALLOUT",
+          "matched_name": "Standard Call-out and Diagnostic Fee",
+          "unit_price_cents": 55000,
+          "line_total_cents": 55000,
+          "flag_reason": null
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_11",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 1.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 0,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "geyser element 3kw",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "ambiguous",
+          "match_score": 85.82809224318659,
+          "price_item_id": 21,
+          "matched_sku": "GEY-ELM-3KW",
+          "matched_name": "Geyser Element 3kW Screw-in",
+          "unit_price_cents": 32000,
+          "line_total_cents": 32000,
+          "flag_reason": "Margin 3.7 below threshold 15.0"
+        },
+        {
+          "spoken": "thermostat",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "ambiguous",
+          "match_score": 100.0,
+          "price_item_id": 25,
+          "matched_sku": "GEY-THM-T10",
+          "matched_name": "Geyser Thermostat TSR 11-inch",
+          "unit_price_cents": 31000,
+          "line_total_cents": 31000,
+          "flag_reason": "Margin 0.0 below threshold 15.0"
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_12",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 0.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 1,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "geyser tp valve 22mm",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 86.20408163265307,
+          "price_item_id": 27,
+          "matched_sku": "GEY-TPV-22",
+          "matched_name": "Temperature and Pressure Safety Valve 22mm 400kPa",
+          "unit_price_cents": 48000,
+          "line_total_cents": 48000,
+          "flag_reason": null
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_13",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 0.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 1,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "geezer element replaced",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 77.88359788359787,
+          "price_item_id": 21,
+          "matched_sku": "GEY-ELM-3KW",
+          "matched_name": "Geyser Element 3kW Screw-in",
+          "unit_price_cents": 32000,
+          "line_total_cents": 32000,
+          "flag_reason": null
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_14",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 0.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 1,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "ball valve 15mm brass",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 82.07407407407408,
+          "price_item_id": 15,
+          "matched_sku": "BRS-15-BV",
+          "matched_name": "15mm Brass Ball Valve Lever",
+          "unit_price_cents": 8500,
+          "line_total_cents": 8500,
+          "flag_reason": null
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_15",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 0.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 2,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "ptfe tape",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 77.4054054054054,
+          "price_item_id": 37,
+          "matched_sku": "CON-PTFE-TP",
+          "matched_name": "PTFE Thread Seal Tape Heavy Duty 12mm",
+          "unit_price_cents": 850,
+          "line_total_cents": 850,
+          "flag_reason": null
+        },
+        {
+          "spoken": "glue",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 84.3411513859275,
+          "price_item_id": 38,
+          "matched_sku": "CON-SOLV-CME",
+          "matched_name": "PVC Solvent Cement 100ml with Brush",
+          "unit_price_cents": 6500,
+          "line_total_cents": 6500,
+          "flag_reason": null
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_16",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 1.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 0,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "copper elbow",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "ambiguous",
+          "match_score": 100.0,
+          "price_item_id": 1,
+          "matched_sku": "COP-15-ELB",
+          "matched_name": "15mm Copper Elbow",
+          "unit_price_cents": 1850,
+          "line_total_cents": 1850,
+          "flag_reason": "Margin 0.0 below threshold 15.0"
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_17",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 0.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 1,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "22mm copper elbow",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 88.23529411764706,
+          "price_item_id": 2,
+          "matched_sku": "COP-22-ELB",
+          "matched_name": "22mm Copper Elbow",
+          "unit_price_cents": 2950,
+          "line_total_cents": 2950,
+          "flag_reason": null
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_18",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 0.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 1,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "1.5mm cable",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 88.35164835164835,
+          "price_item_id": 34,
+          "matched_sku": "CBL-1.5-TW",
+          "matched_name": "1.5mm\u00b2 Twin and Earth Cable (per metre)",
+          "unit_price_cents": 1200,
+          "line_total_cents": 1200,
+          "flag_reason": null
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_19",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 0.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 1,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "2.5mm cable",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 86.36363636363636,
+          "price_item_id": 35,
+          "matched_sku": "CBL-2.5-TW",
+          "matched_name": "2.5mm\u00b2 Twin and Earth Cable (per metre)",
+          "unit_price_cents": 1950,
+          "line_total_cents": 1950,
+          "flag_reason": null
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_20",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 1.0,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 0,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "two hours",
+          "kind": "labour",
+          "quantity_milli": 2000,
+          "unit": "hours",
+          "quantity_vague": false,
+          "match_outcome": "ambiguous",
+          "match_score": 73.96825396825398,
+          "price_item_id": 41,
+          "matched_sku": "LBR-PLM-AFT",
+          "matched_name": "Plumbing Labour After Hours (per hour)",
+          "unit_price_cents": 95000,
+          "line_total_cents": 190000,
+          "flag_reason": "Unstated labour rate: standard and after-hours prices differ"
+        }
+      ]
+    },
+    {
+      "memo_id": "memo_21",
+      "recall": 1.0,
+      "precision": 1.0,
+      "quantity_accuracy": 1.0,
+      "flag_rate": 0.75,
+      "confident_wrong": false,
+      "confident_wrong_count": 0,
+      "confident_line_count": 1,
+      "price_correct": true,
+      "predicted_lines": [
+        {
+          "spoken": "15mm elbow",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "ambiguous",
+          "match_score": 90.0,
+          "price_item_id": 1,
+          "matched_sku": "COP-15-ELB",
+          "matched_name": "15mm Copper Elbow",
+          "unit_price_cents": 1850,
+          "line_total_cents": 1850,
+          "flag_reason": "Margin 1.8 below threshold 15.0"
+        },
+        {
+          "spoken": "22mm tee",
+          "kind": "part",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "ambiguous",
+          "match_score": 92.0,
+          "price_item_id": 12,
+          "matched_sku": "PEX-22-TEE",
+          "matched_name": "22mm PEX Equal Tee",
+          "unit_price_cents": 3200,
+          "line_total_cents": 3200,
+          "flag_reason": "Margin 1.2 below threshold 15.0"
+        },
+        {
+          "spoken": "callout",
+          "kind": "callout",
+          "quantity_milli": 1000,
+          "unit": "each",
+          "quantity_vague": false,
+          "match_outcome": "confident",
+          "match_score": 89.38967136150234,
+          "price_item_id": 42,
+          "matched_sku": "FEE-CALLOUT",
+          "matched_name": "Standard Call-out and Diagnostic Fee",
+          "unit_price_cents": 55000,
+          "line_total_cents": 55000,
+          "flag_reason": null
+        },
+        {
+          "spoken": "3 hours labour",
+          "kind": "labour",
+          "quantity_milli": 3000,
+          "unit": "hours",
+          "quantity_vague": false,
+          "match_outcome": "ambiguous",
+          "match_score": 78.24175824175823,
+          "price_item_id": 41,
+          "matched_sku": "LBR-PLM-AFT",
+          "matched_name": "Plumbing Labour After Hours (per hour)",
+          "unit_price_cents": 95000,
+          "line_total_cents": 285000,
+          "flag_reason": "Unstated labour rate: standard and after-hours prices differ"
+        }
+      ]
+    }
+  ]
+}

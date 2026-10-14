@@ -1,5 +1,12 @@
 # Dockerfile
 
+FROM node:20-slim AS web-build
+WORKDIR /web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+COPY web/ ./
+RUN npm run build
+
 FROM python:3.12-slim
 
 # System deps: ffmpeg for audio, Pango + Cairo for WeasyPrint, build tools
@@ -26,6 +33,7 @@ RUN uv sync --frozen --no-dev
 COPY app/ ./app/
 COPY templates/ ./templates/
 COPY data/ ./data/
+COPY --from=web-build /app/static/ ./app/static/
 
 EXPOSE 8000
 

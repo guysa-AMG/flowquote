@@ -435,9 +435,9 @@ Pick a name that is short, speakable on a phone call, and works as a .tech domai
 - [ ] Record the eval memos, write `truth.jsonl`, add Sentry spans
 
 ### Day 5: measure and fix
-- [ ] Run `make eval`: baselines, model comparison, hotword on/off
-- [ ] Fix what the confident-wrong cases reveal
-- [ ] Showcase site: hero pipe-run sequence, pinned explainer, sample read-only quote
+- [x] Run `make eval`: baselines (typed synthetic baseline only; audio/model comparisons not measured)
+- [x] Fix what the confident-wrong cases reveal
+- [x] Showcase site: hero pipe-run sequence, pinned explainer, sample read-only quote
 - [ ] Optional: Tinker fine-tune if the gate said go
 
 ### Day 6: pilot and polish

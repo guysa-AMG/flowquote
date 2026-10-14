@@ -38,6 +38,6 @@ ISOL-30A-SW,30A Double Pole Geyser Isolator Switch,each,16500,electrical,"{""rat
 CON-PTFE-TP,PTFE Thread Seal Tape Heavy Duty 12mm,each,850,consumables,"{""size"": ""12mm"", ""type"": ""tape""}"
 CON-SOLV-CME,PVC Solvent Cement 100ml with Brush,each,6500,consumables,"{""material"": ""pvc"", ""type"": ""glue""}"
 CON-SOL-WIRE,Lead-Free Solder Wire 250g,each,24000,consumables,"{""type"": ""solder""}"
-LBR-PLM-STD,Plumbing Labour Standard (per hour),hours,65000,labour,"{""kind"": ""labour""}"
-LBR-PLM-AFT,Plumbing Labour After Hours (per hour),hours,95000,labour,"{""kind"": ""labour""}"
+LBR-PLM-STD,Plumbing Labour Standard (per hour),hours,65000,labour,"{""kind"": ""labour"", ""rate"": ""standard""}"
+LBR-PLM-AFT,Plumbing Labour After Hours (per hour),hours,95000,labour,"{""kind"": ""labour"", ""rate"": ""after_hours""}"
 FEE-CALLOUT,Standard Call-out and Diagnostic Fee,each,55000,callout,"{""kind"": ""callout""}"

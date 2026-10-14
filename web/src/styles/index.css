@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-galvanised: #D5DADE;
+    --color-cold-blue: #1C57F2;
+    --color-hot-red: #D93A2B;
+    --color-hivis-yellow: #FFD60A;
+    --color-teflon: #F6F8F9;
+    --color-slate-ink: #14222E;
+  }
+
+  html {
+    font-family: 'Instrument Sans', sans-serif;
+    background-color: var(--color-teflon);
+    color: var(--color-slate-ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 600;
+  }
+
+  .font-display {
+    font-family: 'Bricolage Grotesque', sans-serif;
+  }
+
+  .font-body {
+    font-family: 'Instrument Sans', sans-serif;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-cold-blue text-white px-6 py-3 rounded-lg font-medium
+           hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-cold-blue focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[48px];
+  }
+
+  .btn-secondary {
+    @apply bg-galvanised text-slate-ink px-6 py-3 rounded-lg font-medium
+           hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-galvanised focus:ring-offset-2
+           transition-colors min-h-[48px];
+  }
+
+  .btn-destructive {
+    @apply bg-hot-red text-white px-6 py-3 rounded-lg font-medium
+           hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-hot-red focus:ring-offset-2
+           transition-colors min-h-[48px];
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 border border-galvanised rounded-lg bg-white
+           focus:outline-none focus:ring-2 focus:ring-cold-blue focus:border-transparent
+           text-slate-ink placeholder:text-gray-400 min-h-[48px];
+  }
+
+  .card {
+    @apply bg-white rounded-xl border border-galvanised shadow-sm;
+  }
+
+  .badge-confident {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium
+           bg-green-100 text-green-800;
+  }
+
+  .badge-ambiguous {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium
+           bg-hivis-yellow text-slate-ink;
+  }
+
+  .badge-no-match {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium
+           bg-hot-red/10 text-hot-red;
+  }
+
+  .line-item {
+    @apply flex items-center justify-between py-3 border-b border-galvanised/50;
+  }
+
+  .line-item:last-child {
+    @apply border-b-0;
+  }
+}
+
+@layer utilities {
+  .touch-target {
+    @apply min-h-[48px] min-w-[48px];
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

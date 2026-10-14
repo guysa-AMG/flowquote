@@ -17,7 +17,9 @@ talkquote.egg-info/SOURCES.txt
 talkquote.egg-info/dependency_links.txt
 talkquote.egg-info/requires.txt
 talkquote.egg-info/top_level.txt
+tests/test_api_auth.py
 tests/test_match.py
 tests/test_no_network.py
+tests/test_pipeline.py
 tests/test_pricing.py
 tests/test_schema_guard.py

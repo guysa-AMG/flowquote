@@ -6,10 +6,13 @@ Rules (PLAN.md §3, §9):
 - Sent quote versions are immutable.
 - Everything audited.
 """
+import csv
+import json
 import sqlite3
-from pathlib import Path
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator
+from pathlib import Path
+
 from app.config import settings
 
 SCHEMA_SQL = """
@@ -152,6 +155,7 @@ def get_connection(db_path: str | Path | None = None) -> sqlite3.Connection:
     conn.execute("PRAGMA foreign_keys=ON;")
     return conn
 
+
 @contextmanager
 def get_db(db_path: str | Path | None = None) -> Generator[sqlite3.Connection, None, None]:
     conn = get_connection(db_path)
@@ -160,6 +164,7 @@ def get_db(db_path: str | Path | None = None) -> Generator[sqlite3.Connection, N
         conn.commit()
     finally:
         conn.close()
+
 
 def init_db(db_path: str | Path | None = None) -> None:
     with get_db(db_path) as conn:
@@ -173,3 +178,170 @@ def init_db(db_path: str | Path | None = None) -> None:
                    VALUES ('biz_default', 'Default Plumbing Co', ?, ?, 'en-ZA')""",
                 (settings.default_currency, settings.default_vat_rate_bp),
             )
+        seed_default_price_items(conn, business_id="biz_default")
+        seed_default_aliases(conn, business_id="biz_default")
+
+
+def seed_default_price_items(conn: sqlite3.Connection, business_id: str = "biz_default") -> None:
+    """Populate the default business with the sample price list if it is empty."""
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM price_item WHERE business_id = ?", (business_id,))
+    if cursor.fetchone()[0] > 0:
+        return
+
+    csv_path = Path(__file__).resolve().parent.parent / "data" / "pricelist.sample.csv"
+    with csv_path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            attrs_json = row.get("attrs_json") or "{}"
+            try:
+                parsed_attrs = json.loads(attrs_json)
+            except json.JSONDecodeError:
+                parsed_attrs = {}
+            cursor.execute(
+                """
+                INSERT INTO price_item (business_id, sku, name, unit, price_cents,
+                   category, attrs_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    business_id,
+                    row["sku"],
+                    row["name"],
+                    row["unit"],
+                    int(row["price_cents"]),
+                    row["category"],
+                    json.dumps(parsed_attrs),
+                ),
+            )
+
+
+def seed_default_aliases(conn: sqlite3.Connection, business_id: str = "biz_default") -> None:
+    """Populate default aliases for trade slang and common speech-to-text slips.
+
+    Only multi-word phrases are included to avoid substring matching issues.
+    Single words like "labour", "hours", "element", "cable" are handled by
+    the fuzzy matcher directly.
+    """
+    cursor = conn.cursor()
+    cursor.execute(
+        """DELETE FROM alias
+           WHERE business_id = ? AND source = 'seed'
+             AND phrase IN ('hour', 'hours', 'labour', 'labor')""",
+        (business_id,),
+    )
+    cursor.execute("SELECT COUNT(*) FROM alias WHERE business_id = ?", (business_id,))
+    if cursor.fetchone()[0] > 0:
+        return
+
+    # Map: alias phrase -> target SKU
+    # Only multi-word phrases to avoid substring matching issues
+    aliases = [
+        # Trade slang / speech-to-text slips (multi-word)
+        ("geezer", "GEY-ELM-3KW"),           # "geezer" -> geyser element (short but unique)
+        ("geyser element", "GEY-ELM-3KW"),
+        ("geyser element 3kw", "GEY-ELM-3KW"),
+        ("geyser element 4kw", "GEY-ELM-4KW"),
+        ("flanged element", "GEY-ELM-FLG"),
+        ("thermostat vkf", "GEY-THM-VKF"),
+        ("thermostat tsr", "GEY-THM-T10"),
+        ("tp valve", "GEY-TPV-22"),
+        ("temperature pressure valve", "GEY-TPV-22"),
+        ("ball valve", "BRS-15-BV"),
+        ("gate valve", "BRS-15-BV"),
+        ("check valve", "BRS-15-CV"),
+        ("pressure valve", "PRV-400-15"),
+        ("waste trap", "PVC-40-TRP"),
+        ("soil pipe", "PVC-110-BND"),
+        ("ptfe tape", "CON-PTFE-TP"),
+        ("solvent cement", "CON-SOLV-CME"),
+        ("twin and earth", "CBL-1.5-TW"),
+        ("isolator switch", "ISOL-30A-SW"),
+        ("safety valve", "GEY-TPV-22"),
+        ("drain cock", "GEY-DRN-CK"),
+        ("vacuum breaker", "GEY-VAC-15"),
+        # Labour variants (multi-word)
+        ("standard labour", "LBR-PLM-STD"),
+        ("standard labor", "LBR-PLM-STD"),
+        ("after hours labour", "LBR-PLM-AFT"),
+        ("after hours labor", "LBR-PLM-AFT"),
+        ("overtime labour", "LBR-PLM-AFT"),
+        ("overtime labor", "LBR-PLM-AFT"),
+        ("overtime", "LBR-PLM-AFT"),
+        # Callout variants (multi-word)
+        ("callout fee", "FEE-CALLOUT"),
+        ("call out fee", "FEE-CALLOUT"),
+        ("diagnostic fee", "FEE-CALLOUT"),
+        ("trip fee", "FEE-CALLOUT"),
+        ("site visit", "FEE-CALLOUT"),
+        # Copper fittings (with size)
+        ("15mm copper elbow", "COP-15-ELB"),
+        ("15mm copper tee", "COP-15-TEE"),
+        ("15mm copper coupler", "COP-15-CPL"),
+        ("15mm copper pipe", "COP-15-PIP"),
+        ("22mm copper elbow", "COP-22-ELB"),
+        ("22mm copper tee", "COP-22-TEE"),
+        ("22mm copper coupler", "COP-22-CPL"),
+        ("22mm copper pipe", "COP-22-PIP"),
+        # PEX fittings (with size)
+        ("15mm pex elbow", "PEX-15-ELB"),
+        ("15mm pex tee", "PEX-15-TEE"),
+        ("15mm pex coupler", "PEX-15-CPL"),
+        ("15mm pex pipe", "PEX-15-PIP"),
+        # Brass fittings (with size)
+        ("15mm brass valve", "BRS-15-BV"),
+        ("15mm brass check valve", "BRS-15-CV"),
+        # Geyser parts (specific)
+        ("geyser element 3kw", "GEY-ELM-3KW"),
+        ("geyser element 4kw", "GEY-ELM-4KW"),
+        # Single-word trade slang (single-pass matching prevents substring explosion).
+        # Generic labour/time words stay out: they collide with quantities and rates.
+        ("geezer", "GEY-ELM-3KW"),
+        ("callout", "FEE-CALLOUT"),
+        ("trap", "PVC-40-TRP"),
+        ("tape", "CON-PTFE-TP"),
+        ("glue", "CON-SOLV-CME"),
+        ("cable", "CBL-1.5-TW"),
+        ("switch", "ISOL-30A-SW"),
+        ("element", "GEY-ELM-3KW"),
+        ("anode", "GEY-ANODE-S"),
+    ]
+
+    # Build SKU -> id map
+    cursor.execute("SELECT id, sku FROM price_item WHERE business_id = ?", (business_id,))
+    sku_to_id = {row["sku"]: row["id"] for row in cursor.fetchall()}
+
+    for phrase, target_sku in aliases:
+        if target_sku in sku_to_id:
+            cursor.execute(
+                """INSERT INTO alias (business_id, phrase, price_item_id, source)
+                   VALUES (?, ?, ?, 'seed')""",
+                (business_id, phrase.lower(), sku_to_id[target_sku]),
+            )
+
+
+def fetch_price_items(conn: sqlite3.Connection, business_id: str = "biz_default") -> list[dict]:
+    """Load active price items for the given business."""
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT id, sku, name, unit, price_cents, category, attrs_json
+        FROM price_item WHERE business_id = ? AND active = 1
+        ORDER BY name ASC
+        """,
+        (business_id,),
+    )
+    rows = cursor.fetchall()
+    result: list[dict] = []
+    for row in rows:
+        attrs = json.loads(row["attrs_json"] or "{}")
+        result.append({
+            "id": row["id"],
+            "sku": row["sku"],
+            "name": row["name"],
+            "unit": row["unit"],
+            "price_cents": row["price_cents"],
+            "category": row["category"],
+            "attrs": attrs,
+        })
+    return result

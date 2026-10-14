@@ -7,13 +7,14 @@ Assert model output containing currency symbols is rejected.
 """
 import pytest
 from pydantic import ValidationError
+
 from app.extract import Extraction, SpokenLine, get_extraction_schema
 
 FORBIDDEN_TERMS = ["price", "cost", "amount", "total", "currency"]
 
 def test_json_schema_has_zero_forbidden_price_fields():
     schema = get_extraction_schema()
-    
+
     # Flatten all schema field names
     found_keys = []
     def extract_keys(d):
@@ -26,7 +27,7 @@ def test_json_schema_has_zero_forbidden_price_fields():
                 extract_keys(item)
 
     extract_keys(schema)
-    
+
     for key in found_keys:
         for forbidden in FORBIDDEN_TERMS:
             assert forbidden not in key, f"Forbidden term '{forbidden}' found in schema key: {key}"

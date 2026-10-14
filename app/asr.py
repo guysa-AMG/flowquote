@@ -5,11 +5,16 @@ PLAN.md §6:
 - Transcribes using faster-whisper with VAD filter.
 - initial_prompt (capped to ~224 tokens) for common items, hotwords for rarer trade terms.
 """
-import os
 import subprocess
-import tempfile
 from pathlib import Path
+
 from app.config import settings
+
+DEFAULT_INITIAL_PROMPT = (
+    "Copper pipe 15mm, 22mm, geyser element, thermostat, callout fee, labour hours."
+)
+DEFAULT_HOTWORDS = "geyser, PEX, polycop, brass, compression fitting"
+
 
 def normalize_audio_to_wav(input_path: Path, output_path: Path) -> Path:
     """Uses ffmpeg to convert any audio container to 16 kHz mono WAV."""
@@ -25,23 +30,44 @@ def normalize_audio_to_wav(input_path: Path, output_path: Path) -> Path:
     subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return output_path
 
+
 class Transcriber:
     def __init__(self, model_size: str | None = None):
-        self.model_size = model_size or settings.whisper_model_size
+        configured_model = settings.whisper_model_path
+        self.model_size = (
+            str(configured_model)
+            if configured_model
+            else (model_size or settings.whisper_model_size)
+        )
         self._model = None
 
     def _load_model(self):
         if self._model is None:
             # Lazy import faster_whisper to avoid startup overhead when testing without audio
             from faster_whisper import WhisperModel
-            self._model = WhisperModel(self.model_size, device="cpu", compute_type="int8")
+            size_ok = Path(self.model_size).is_dir()
+            if (
+                settings.whisper_local_files_only
+                and settings.whisper_model_path
+                and not size_ok
+            ):
+                raise FileNotFoundError(
+                    "Whisper weights are not installed locally. Provision model files before "
+                    "starting the offline pipeline."
+                )
+            self._model = WhisperModel(
+                self.model_size,
+                device="cpu",
+                compute_type="int8",
+                local_files_only=settings.whisper_local_files_only,
+            )
         return self._model
 
     def transcribe(
         self,
         audio_path: Path,
-        initial_prompt: str = "Copper pipe 15mm, 22mm, geyser element, thermostat, callout fee, labour hours.",
-        hotwords: str | None = "geyser, PEX, polycop, brass, compression fitting",
+        initial_prompt: str = DEFAULT_INITIAL_PROMPT,
+        hotwords: str | None = DEFAULT_HOTWORDS,
     ) -> str:
         """Transcribes audio file to plain text."""
         model = self._load_model()

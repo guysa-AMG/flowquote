@@ -4,14 +4,15 @@ Verifies integer-cent calculations, round_half_up, VAT computations,
 and ensures no floats are used in monetary math.
 """
 from decimal import Decimal
-import pytest
+
 from app.pricing import (
-    round_half_up,
-    qty_to_milli,
     calculate_line_total_cents,
-    calculate_vat_cents,
     calculate_quote_totals,
+    calculate_vat_cents,
+    qty_to_milli,
+    round_half_up,
 )
+
 
 def test_round_half_up():
     assert round_half_up(Decimal("10.4")) == 10

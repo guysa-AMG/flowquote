@@ -1,11 +1,12 @@
 """Matcher test suite covering known traps (PLAN.md §8)."""
 import pytest
+
 from app.match import (
-    PriceItemCandidate,
     MatchOutcome,
+    PriceItemCandidate,
     match_line,
-    parse_attributes,
 )
+
 
 @pytest.fixture
 def sample_items():
@@ -34,6 +35,10 @@ def test_ambiguous_unstated_size(sample_items):
     res = match_line("copper elbow", sample_items)
     assert res.outcome == MatchOutcome.AMBIGUOUS
     assert res.flag_reason is not None
+    assert {candidate.item.sku for candidate in res.candidates} >= {
+        "COP-15-ELB",
+        "COP-22-ELB",
+    }
 
 def test_no_match_for_unknown_item(sample_items):
     res = match_line("flux capacitor valve", sample_items)
@@ -48,3 +53,105 @@ def test_alias_resolution(sample_items):
     res = match_line("geezer element", items, alias_map=alias_map)
     assert res.outcome == MatchOutcome.CONFIDENT
     assert res.best_match.sku == "GEY-ELM-3KW"
+
+
+def test_unspecified_labour_rate_is_ambiguous():
+    items = [
+        PriceItemCandidate(
+            id=40,
+            sku="LBR-PLM-STD",
+            name="Plumbing Labour Standard (per hour)",
+            unit="hours",
+            price_cents=65000,
+            category="labour",
+            attrs={"kind": "labour", "rate": "standard"},
+        ),
+        PriceItemCandidate(
+            id=41,
+            sku="LBR-PLM-AFT",
+            name="Plumbing Labour After Hours (per hour)",
+            unit="hours",
+            price_cents=95000,
+            category="labour",
+            attrs={"kind": "labour", "rate": "after_hours"},
+        ),
+    ]
+
+    result = match_line("two hours labour", items)
+
+    assert result.outcome == MatchOutcome.AMBIGUOUS
+    assert {candidate.item.sku for candidate in result.candidates} == {
+        "LBR-PLM-STD",
+        "LBR-PLM-AFT",
+    }
+
+
+def test_explicit_after_hours_labour_rate_is_confident():
+    items = [
+        PriceItemCandidate(
+            id=40,
+            sku="LBR-PLM-STD",
+            name="Plumbing Labour Standard (per hour)",
+            unit="hours",
+            price_cents=65000,
+            category="labour",
+            attrs={"kind": "labour", "rate": "standard"},
+        ),
+        PriceItemCandidate(
+            id=41,
+            sku="LBR-PLM-AFT",
+            name="Plumbing Labour After Hours (per hour)",
+            unit="hours",
+            price_cents=95000,
+            category="labour",
+            attrs={"kind": "labour", "rate": "after_hours"},
+        ),
+    ]
+
+    result = match_line("after hours labour 2 hours", items)
+
+    assert result.outcome == MatchOutcome.CONFIDENT
+    assert result.best_match is not None
+    assert result.best_match.sku == "LBR-PLM-AFT"
+
+
+def test_callout_phrase_does_not_trigger_labour_rate_ambiguity():
+    items = [
+        PriceItemCandidate(
+            id=40,
+            sku="LBR-PLM-STD",
+            name="Plumbing Labour Standard (per hour)",
+            unit="hours",
+            price_cents=65000,
+            category="labour",
+            attrs={"kind": "labour", "rate": "standard"},
+        ),
+        PriceItemCandidate(
+            id=41,
+            sku="LBR-PLM-AFT",
+            name="Plumbing Labour After Hours (per hour)",
+            unit="hours",
+            price_cents=95000,
+            category="labour",
+            attrs={"kind": "labour", "rate": "after_hours"},
+        ),
+        PriceItemCandidate(
+            id=42,
+            sku="FEE-CALLOUT",
+            name="Standard Call-out and Diagnostic Fee",
+            unit="each",
+            price_cents=55000,
+            category="callout",
+            attrs={"kind": "callout"},
+        ),
+    ]
+
+    result = match_line(
+        "callout fee",
+        items,
+        alias_map={"callout fee": "Standard Call-out and Diagnostic Fee"},
+    )
+
+    assert result.outcome == MatchOutcome.CONFIDENT
+    assert result.best_match is not None
+    assert result.best_match.sku == "FEE-CALLOUT"

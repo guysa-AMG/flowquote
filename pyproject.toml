@@ -59,7 +59,9 @@ ignore = []
 [tool.ruff.lint]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "S106"]
+"tests/*" = ["S101", "S106", "E501"]
+"eval/*" = ["E501", "T20"]
+"app/main.py" = ["B008"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

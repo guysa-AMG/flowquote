@@ -3,9 +3,10 @@
 Asserts that running pipeline operations does not attempt outbound network sockets.
 """
 import pytest
-from app.extract import Extraction, SpokenLine
+
+from app.match import PriceItemCandidate, match_line
 from app.pricing import calculate_line_total_cents
-from app.match import match_line, PriceItemCandidate
+
 
 @pytest.mark.usefixtures("disable_socket")
 def test_pipeline_functions_without_network():

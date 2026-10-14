@@ -7,6 +7,7 @@ import json
 import sqlite3
 from typing import Any
 
+
 def log_audit_event(
     conn: sqlite3.Connection,
     business_id: str,
@@ -25,7 +26,10 @@ def log_audit_event(
     )
     return cursor.lastrowid or 0
 
-def fetch_audit_trail(conn: sqlite3.Connection, entity: str, entity_id: str) -> list[dict[str, Any]]:
+
+def fetch_audit_trail(
+    conn: sqlite3.Connection, entity: str, entity_id: str
+) -> list[dict[str, Any]]:
     """Retrieves chronological audit events for an entity."""
     cursor = conn.cursor()
     cursor.execute(

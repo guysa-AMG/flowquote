@@ -4,8 +4,10 @@
 *.wav
 *.mp3
 *.m4a
+*.mp4
 *.opus
 *.webm
+*.ogg
 *.db
 *.sqlite
 *.sqlite-wal
@@ -26,6 +28,7 @@ venv/
 node_modules/
 dist/
 build/
+/app/static/
 .env.local
 *.log
 

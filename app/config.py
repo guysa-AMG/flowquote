@@ -14,7 +14,7 @@ class Settings(BaseSettings):
 
     app_name: str = APP_NAME
     env: str = "development"
-    debug: bool = True
+    debug: bool = False
 
     # Matching thresholds (PLAN.md §8)
     min_score: float = 75.0
@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     ollama_host: str = "http://localhost:11434"
     ollama_model: str = "gemma2:9b"  # or qwen2.5:7b
     whisper_model_size: str = "large-v3-turbo"  # fallback to 'small' on low CPU
+    whisper_model_path: Path | None = None
+    whisper_local_files_only: bool = True
 
     # Auth
     auth_pin: str = "1234"

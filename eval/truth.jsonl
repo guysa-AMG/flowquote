@@ -1,3 +1,47 @@
 # eval/truth.jsonl
+# Ground truth for evaluation (typed phrases, no audio needed for CI)
+# Each line: {memo_id, transcript, expected_items: [{sku, quantity_milli}]}
+
+# Basic confident matches
 {"memo_id": "memo_01", "transcript": "replaced 15mm copper elbow and two hours labour", "expected_items": [{"sku": "COP-15-ELB", "quantity_milli": 1000}, {"sku": "LBR-PLM-STD", "quantity_milli": 2000}]}
 {"memo_id": "memo_02", "transcript": "22mm copper elbow, callout fee", "expected_items": [{"sku": "COP-22-ELB", "quantity_milli": 1000}, {"sku": "FEE-CALLOUT", "quantity_milli": 1000}]}
+
+# Quantity variations
+{"memo_id": "memo_03", "transcript": "three 15mm copper tees", "expected_items": [{"sku": "COP-15-TEE", "quantity_milli": 3000}]}
+{"memo_id": "memo_04", "transcript": "a couple of 22mm copper couplers", "expected_items": [{"sku": "COP-22-CPL", "quantity_milli": null}]}
+
+# Vague quantities
+{"memo_id": "memo_05", "transcript": "some 15mm copper pipe and a few elbows", "expected_items": [{"sku": "COP-15-PIP", "quantity_milli": null}, {"acceptable_skus": ["COP-15-ELB", "COP-22-ELB", "PEX-15-ELB", "PEX-22-ELB"], "quantity_milli": null}]}
+
+# Labour variations
+{"memo_id": "memo_06", "transcript": "standard labour 4 hours", "expected_items": [{"sku": "LBR-PLM-STD", "quantity_milli": 4000}]}
+{"memo_id": "memo_07", "transcript": "after hours labour 2 hours", "expected_items": [{"sku": "LBR-PLM-AFT", "quantity_milli": 2000}]}
+{"memo_id": "memo_08", "transcript": "overtime 3 hours", "expected_items": [{"sku": "LBR-PLM-AFT", "quantity_milli": 3000}]}
+
+# Callout variations
+{"memo_id": "memo_09", "transcript": "callout fee and diagnostic", "expected_items": [{"sku": "FEE-CALLOUT", "quantity_milli": 1000}]}
+{"memo_id": "memo_10", "transcript": "site visit and trip fee", "expected_items": [{"sku": "FEE-CALLOUT", "quantity_milli": 1000}]}
+
+# Geyser parts
+{"memo_id": "memo_11", "transcript": "geyser element 3kw and thermostat", "expected_items": [{"acceptable_skus": ["GEY-ELM-3KW", "GEY-ELM-FLG"], "quantity_milli": 1000}, {"acceptable_skus": ["GEY-THM-VKF", "GEY-THM-T10"], "quantity_milli": 1000}]}
+{"memo_id": "memo_12", "transcript": "geyser tp valve 22mm", "expected_items": [{"sku": "GEY-TPV-22", "quantity_milli": 1000}]}
+
+# Trade slang / speech-to-text slips
+{"memo_id": "memo_13", "transcript": "geezer element replaced", "expected_items": [{"sku": "GEY-ELM-3KW", "quantity_milli": 1000}]}
+{"memo_id": "memo_14", "transcript": "ball valve 15mm brass", "expected_items": [{"sku": "BRS-15-BV", "quantity_milli": 1000}]}
+{"memo_id": "memo_15", "transcript": "ptfe tape and glue", "expected_items": [{"sku": "CON-PTFE-TP", "quantity_milli": 1000}, {"sku": "CON-SOLV-CME", "quantity_milli": 1000}]}
+
+# Known traps from PLAN.md §8
+# 15mm vs 22mm near-duplicates
+{"memo_id": "memo_16", "transcript": "copper elbow", "expected_items": [{"acceptable_skus": ["COP-15-ELB", "COP-22-ELB"], "quantity_milli": 1000}]}
+{"memo_id": "memo_17", "transcript": "22mm copper elbow", "expected_items": [{"sku": "COP-22-ELB", "quantity_milli": 1000}]}
+
+# Cable sizes
+{"memo_id": "memo_18", "transcript": "1.5mm cable", "expected_items": [{"sku": "CBL-1.5-TW", "quantity_milli": 1000}]}
+{"memo_id": "memo_19", "transcript": "2.5mm cable", "expected_items": [{"sku": "CBL-2.5-TW", "quantity_milli": 1000}]}
+
+# Labour vs part
+{"memo_id": "memo_20", "transcript": "two hours", "expected_items": [{"acceptable_skus": ["LBR-PLM-STD", "LBR-PLM-AFT"], "quantity_milli": 2000}]}
+
+# Multiple items
+{"memo_id": "memo_21", "transcript": "15mm elbow, 22mm tee, callout, 3 hours labour", "expected_items": [{"acceptable_skus": ["COP-15-ELB", "PEX-15-ELB"], "quantity_milli": 1000}, {"acceptable_skus": ["COP-22-TEE", "PEX-22-TEE"], "quantity_milli": 1000}, {"sku": "FEE-CALLOUT", "quantity_milli": 1000}, {"acceptable_skus": ["LBR-PLM-STD", "LBR-PLM-AFT"], "quantity_milli": 3000}]}
