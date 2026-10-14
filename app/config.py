@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     default_currency: str = "ZAR"  # Config-only, e.g. ZAR, GBP, USD
     default_vat_rate_bp: int = 1500  # 15.00% (basis points = rate * 100)
 
+    # Multi-tenant default business id
+    default_business_id: str = "biz_default"
+
     # Storage & DB
     database_path: str = "talkquote.sqlite"
     audio_storage_dir: Path = Path("storage/audio")

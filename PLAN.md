@@ -229,7 +229,8 @@ Prompt rules: say only what was said, do not infer items not mentioned, do not g
 | `quote` | id, business_id, number, customer_name, site_address, status (`draft`, `sent`, `accepted`), created_at |
 | `quote_version` | id, quote_id, version, subtotal_cents, vat_cents, total_cents, sent_at |
 | `quote_line` | id, version_id, variation_id?, kind, spoken, price_item_id?, quantity_milli, unit, unit_price_cents, match_outcome, match_score, resolved_by (`auto`, `user`), note |
-| `variation` | id, quote_id, based_on_version, number, status, approved_by_name, approved_at |
+| `variation` | id, business_id, quote_id, memo_id, based_on_version, number, status, subtotal_cents, vat_cents, total_cents, approved_by_name, approved_at |
+| `variation_line` | id, business_id, variation_id, kind, spoken, price_item_id?, quantity_milli, unit, unit_price_cents, match_outcome, match_score, note |
 | `audit_log` | id, ts, business_id, entity, entity_id, event, payload_json, actor |
 
 Keep `business_id` on every table so multi-user is not a rewrite. One tenant is fine for now. Access: PIN or token login from the start, since the server is reachable on a local network.
@@ -245,10 +246,12 @@ Keep `business_id` on every table so multi-user is not a rewrite. One tenant is 
 | `GET /api/jobs/{id}` (and `/events` SSE) | Pipeline status |
 | `GET /api/memos/{id}` | Transcript, lines with outcomes and candidates |
 | `PATCH /api/quotes/{id}/lines/{line_id}` | Resolve a flag or edit a line (audited) |
+| `GET /api/quotes/{id}/lines/{line_id}/candidates` | Return a short ranked list for explicit human resolution |
 | `POST /api/quotes/{id}/send` | Finalize a version, generate PDF |
 | `GET /api/quotes/{id}/pdf` | Download PDF |
 | `POST /api/quotes/{id}/variations` | Create a variation from a memo |
 | `POST /api/variations/{id}/approve` | Record typed name and timestamp |
+| `GET /api/variations/{id}/pdf` | Download the version-linked variation PDF |
 | `POST /api/pricelist/import` | CSV with column-mapping preview |
 | `GET/POST/DELETE /api/aliases` | Manage aliases |
 | `GET /api/audit?quote_id=` | Decision trail |
