@@ -5,11 +5,11 @@ PLAN.md §6:
 - Transcribes using faster-whisper with VAD filter.
 - initial_prompt (capped to ~224 tokens) for common items, hotwords for rarer trade terms.
 """
-import os
 import subprocess
-import tempfile
 from pathlib import Path
+
 from app.config import settings
+
 
 def normalize_audio_to_wav(input_path: Path, output_path: Path) -> Path:
     """Uses ffmpeg to convert any audio container to 16 kHz mono WAV."""

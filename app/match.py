@@ -9,15 +9,16 @@ Matching rules (PLAN.md §8):
    - AMBIGUOUS: multiple survivors, or unstated attribute differs (e.g. 15mm vs 22mm).
    - NO_MATCH: nothing above MIN_SCORE. Never guess.
 """
-from dataclasses import dataclass, field
-from enum import Enum
 import re
-from typing import Any
+from dataclasses import dataclass, field
+from enum import StrEnum
+
 from rapidfuzz import fuzz
 
 from app.config import settings
 
-class MatchOutcome(str, Enum):
+
+class MatchOutcome(StrEnum):
     CONFIDENT = "confident"
     AMBIGUOUS = "ambiguous"
     NO_MATCH = "no_match"
@@ -56,7 +57,7 @@ KIND_LABOUR_PATTERN = re.compile(r"\b(labour|labor|hour|hours|callout|call-out|t
 def parse_attributes(text: str) -> dict[str, str]:
     """Extracts explicit attributes like size, material, and fitting type from string."""
     attrs: dict[str, str] = {}
-    
+
     # Size
     size_match = SIZE_PATTERN.search(text)
     if size_match:
@@ -65,12 +66,12 @@ def parse_attributes(text: str) -> dict[str, str]:
         if unit in ['"', "in"]:
             unit = "inch"
         attrs["size"] = f"{size_val}{unit}"
-        
+
     # Material
     mat_match = MATERIAL_PATTERN.search(text)
     if mat_match:
         attrs["material"] = mat_match.group(1).lower()
-        
+
     # Type
     type_match = FITTING_TYPE_PATTERN.search(text)
     if type_match:
@@ -109,7 +110,7 @@ def match_line(
 
     normalized_spoken = apply_aliases(spoken, alias_map)
     spoken_attrs = parse_attributes(normalized_spoken)
-    
+
     # 1. Attribute filtering
     survivors: list[PriceItemCandidate] = []
     for item in price_items:
@@ -132,7 +133,7 @@ def match_line(
         token_score = fuzz.token_set_ratio(normalized_spoken, item.name.lower())
         partial_score = fuzz.partial_ratio(normalized_spoken, item.name.lower())
         final_score = (token_score * 0.6) + (partial_score * 0.4)
-        
+
         if final_score >= min_score:
             scored.append(ScoredCandidate(item=item, score=final_score))
 
@@ -147,7 +148,7 @@ def match_line(
         )
 
     best = scored[0]
-    
+
     # Check if multiple candidates exist
     if len(scored) == 1:
         # Check if an unstated critical attribute (like size) could cause ambiguity

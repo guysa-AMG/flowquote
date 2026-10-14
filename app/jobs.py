@@ -4,7 +4,8 @@ Processes memo jobs sequentially without external brokers (no Celery/Redis).
 """
 import asyncio
 import logging
-from typing import Callable, Coroutine
+from collections.abc import Callable, Coroutine
+
 from app.db import get_db
 
 logger = logging.getLogger(__name__)
@@ -42,8 +43,8 @@ class JobWorker:
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute(
-                """SELECT id FROM job 
-                   WHERE state = 'queued' 
+                """SELECT id FROM job
+                   WHERE state = 'queued'
                    ORDER BY updated_at ASC LIMIT 1"""
             )
             row = cursor.fetchone()

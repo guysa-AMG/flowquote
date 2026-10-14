@@ -4,9 +4,10 @@ Core rule (PLAN.md §2, §7):
 The model extracts what was said. It has NO price, cost, amount, total, or currency field.
 Any currency symbol in model output is rejected.
 """
-from decimal import Decimal
 import re
+from decimal import Decimal
 from typing import Literal
+
 from pydantic import BaseModel, Field, field_validator
 
 CURRENCY_SYMBOLS = ["$", "£", "€", "R", "¥", "₹"]

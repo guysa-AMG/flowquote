@@ -9,7 +9,7 @@ Non-negotiable rules (PLAN.md §2, §8):
 - total = subtotal + vat
 - Never use floats for monetary calculation.
 """
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 
 MILLI_FACTOR = Decimal(1000)
 BP_FACTOR = Decimal(10000)
