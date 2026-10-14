@@ -24,8 +24,8 @@ class SpokenLine(BaseModel):
     @classmethod
     def reject_currency_symbols(cls, v: str) -> str:
         for sym in CURRENCY_SYMBOLS:
-            # Check for currency symbols with numbers, e.g. $50, R150, £20
-            if re.search(rf"\{sym}\s*\d+", v) or re.search(rf"\d+\s*\{sym}", v):
+            escaped = re.escape(sym)
+            if re.search(rf"{escaped}\s*\d+", v) or re.search(rf"\d+\s*{escaped}", v):
                 raise ValueError(f"Spoken text contains illegal currency symbol: {sym}")
         return v
 

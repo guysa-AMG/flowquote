@@ -1,0 +1,61 @@
+Metadata-Version: 2.4
+Name: talkquote
+Version: 0.1.0
+Summary: Voice-to-quote for plumbers
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi>=0.110
+Requires-Dist: uvicorn[standard]>=0.29
+Requires-Dist: faster-whisper>=1.0
+Requires-Dist: ollama>=0.3
+Requires-Dist: pydantic>=2.7
+Requires-Dist: pydantic-settings>=2.3
+Requires-Dist: rapidfuzz>=3.5
+Requires-Dist: jinja2>=3.1
+Requires-Dist: weasyprint>=61
+Requires-Dist: sqlite-utils>=3.37
+Requires-Dist: python-multipart>=0.0.9
+Requires-Dist: sentry-sdk>=1.45
+Requires-Dist: httpx>=0.27
+Requires-Dist: python-dotenv>=1.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.2; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.23; extra == "dev"
+Requires-Dist: pytest-socket>=0.6; extra == "dev"
+Requires-Dist: pytest-cov>=5.0; extra == "dev"
+Requires-Dist: ruff>=0.5; extra == "dev"
+Requires-Dist: mypy>=1.10; extra == "dev"
+Requires-Dist: pre-commit>=3.7; extra == "dev"
+
+# TalkQuote (working title)
+
+Voice-to-quote for plumbers. Record a memo on site → open models extract line items → code prices from your price list → you approve a PDF quote. Mid-job extras become variation orders.
+
+## Principles (from PLAN.md §§2,3)
+
+- **Model extracts. Code prices. Human approves.** LLM schema has no price/cost/amount/total/currency fields.
+- **No network in runtime pipeline.** Offline-first, no CDN, bundle everything.
+- **Money = integer cents / Decimal.** Never floats. VAT/currency config-only.
+- **Immutable sent quotes.** Edits → new version. Variations link to version. Every decision in audit log.
+- **Matcher outcomes:** confident / ambiguous / no-match — never guess. Confident-wrong rate is the safety metric.
+
+## Quickstart (once scaffolded)
+
+```bash
+docker compose up   # app + ollama; FastAPI serves Vite build
+make test           # unit + no-network + schema-guard + matcher eval (typed phrases)
+make eval           # full audio eval (local only)
+make demo           # demo helpers
+```
+
+## Project docs
+
+- `PLAN.md` — full spec (read first)
+- `AGENTS.md` — agent constraints (this repo)
+- `DECISIONS.md` — one-line decision log
+- `DEPENDENCIES.md` — license + reason per dep
+- `docs/design-plan.md` — UI design review (write before UI code)
+
+## License
+
+TBD (permissive, per PLAN.md §15 Day 0).
